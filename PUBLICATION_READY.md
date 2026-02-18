@@ -1,111 +1,47 @@
-# CAN Insight V2.0 - Publication Ready ✅
+FMS-Standard v05 (2024/2025)
+Description
+This PR performs a comprehensive audit and update of the pgn_library.js file against the official FMS-Standard document (v05, July 2024/Nov 2025). It resolves 17 legacy data issues, corrects byte alignments, and adds support for the latest 2025 edition PGNs, including electric vehicle (EV) and hybrid metrics.
 
-## Validation Date
-2026-02-17
+Key Changes
+1. Data Integrity & Naming Corrections
+Aligned PGN names with official documentation to ensure logs and UI displays reflect the correct hardware:
 
-## Status
-**APPROVED FOR PUBLICATION** 🚀
+F005: Electronic Transmission Controller 1 → ETC2
 
-## Validation Summary
+F009: Electronic Transmission Controller 2 → Vehicle Dynamic Stability Control 2 (VDSC2)
 
-### Code Quality: A+
-- **Total Lines:** 1,540
-- **Syntax:** ✅ All balanced (braces, brackets, parentheses)
-- **HTML Tags:** ✅ Properly nested
-- **Modern JavaScript:** ✅ Using let/const (164 declarations)
-- **No TODO/FIXME:** ✅ Clean codebase
+FE56: Air Suspension/Engine Hours → AT1T1I (DEF Tank Level)
 
-### External Dependencies: All Active ✅
-1. Chart.js (jsdelivr CDN) - Timeline visualization
-2. PapaParse (cdnjs) - CSV parsing
-3. SheetJS/XLSX (jsdelivr) - Excel export
-4. Google Fonts (Figtree & JetBrains Mono)
+FEF2: High Resolution Fuel Consumption → Fuel Economy (LFE)
 
-### Features: 100% Complete ✅
+2. Byte Alignment & Bitmask Fixes
+Corrected bit-level mapping to prevent data corruption or incorrect value parsing:
 
-#### Tab System
-- Raw Data (default view)
-- RPM Analysis & Timeline
-- Tachograph & RTD Data
+FD09: Shifted SPN 5054 from byte 0 to byte 4 (matching Bytes 5-8 in PDF).
 
-#### Data Display
-- Telemetry Summary (VIN, RPM, Fuel, Distance, PTO, RTD)
-- Data Overview with SPN numbers
-- Vehicle Supported PGNs table
-- PGN Inventory with counts
+FEF1: Corrected BrakeSwitch (0x0C → 0x30) and ClutchSwitch (0x30 → 0xC0) masks.
 
-#### Timeline Chart (5 Metrics)
-- RPM (cyan)
-- Accelerator Pedal % (green)
-- Brake Pedal % (red)
-- Engine Load % (amber)
-- PTO State (orange)
+FEFC: Fixed FuelLevel2 position from byte 0 to byte 5.
 
-#### Tachograph Features
-- RTD communication analysis
-- Data Identifiers (DIDs) with decoders
-- Work state, direction, overspeed decoders
-- Tachograph PGN data display
+Fixed 8-byte Overflow: Resolved a critical bug in HarshAccel where b=7, l=2 exceeded the standard CAN frame length.
 
-#### Excel Export
-- Data Overview export
-- Vehicle Supported PGNs export
-- Metadata (VIN, Make, Baud Rate, Date)
+3. Resolution & Offset Updates
+Updated scaling factors to ensure raw CAN data translates to accurate physical values:
 
-#### Advanced Features
-- CAN baud rate detection (250/500 kbps)
-- VIN/VRN detection with manufacturer lookup
-- Harsh braking detection
-- Driver ID decoding (null & 0xFF termination)
-- Comprehensive PGN/SPN library
+FE58 (Bellow Pressure): Resolution adjusted from 4 to 0.1 kPa/bit.
 
-### Browser Compatibility ✅
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Modern ES6+ browsers
+FEC0 (Service Distance): Applied correct offset of -160635.
 
-### Security ✅
-- Proper error handling
-- No XSS vulnerabilities
-- Safe CDN usage
-- No eval() or unsafe operations
+4. New PGN & SPN Support
+Expanded the library to support the 2025 edition and missing legacy metadata:
 
-### Performance ✅
-- Efficient CSV parsing
-- Chart sampling (every 15th message)
-- Optimized rendering
-- Minimal DOM manipulation
+Added Missing SPNs: Including Engine Oil Temp (175), Ambient Air Temp (171), and Service Brake pressures.
 
-## Publication Instructions
+10 New PGNs Added: Full support for EV Charging State (FAB8), Hybrid Battery Charge (FCB7), Fuel Type (FDC2), and High Voltage System History (FC5E).
 
-### Simple Deployment
-1. Upload `can_insight_v2.html` to web server
-2. Access via browser (HTTPS recommended)
-3. No build step required - standalone file
+Verification
+[x] Cross-checked against FMS-Standard v05 (07.07.2024).
 
-### Requirements
-- Web server (any - Apache, Nginx, IIS, etc.)
-- Internet connection (for CDN resources)
-- Modern web browser
+[x] Validated that all SPN byte positions fit within the 8-byte CAN frame.
 
-### Optional Enhancements (Future)
-- Add CDN integrity hashes
-- Minify for production
-- Add PWA manifest
-- Implement service worker
-- Add unit tests
-
-## Approval
-
-**Code Quality:** A+
-**Functionality:** 100%
-**Security:** Excellent
-**Performance:** Optimized
-**User Experience:** Professional
-
-✅ **APPROVED FOR IMMEDIATE PUBLICATION**
-
----
-*Validated by comprehensive automated and manual review*
-*CAN Insight V2.0 by Nigel F*
+[x] Removed duplicate non-standard PGN FEF3
