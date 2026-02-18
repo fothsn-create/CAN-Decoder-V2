@@ -1,0 +1,1099 @@
+{
+  "protocol": "J1939 / FMS / Squarell",
+  "pgns": [
+    {
+      "pgn": "00F009",
+      "spns": [
+        {
+          "spn": 513,
+          "name": "Actual Engine \u2013 Percent Torque",
+          "resolution": "Fuel Consumption"
+        },
+        {
+          "spn": 513,
+          "name": "Actual Engine \u2013 Percent Torque",
+          "resolution": "Fuel Consumption"
+        },
+        {
+          "spn": 38,
+          "name": "Fuel Level 2",
+          "resolution": "Unknown"
+        }
+      ]
+    },
+    {
+      "pgn": "00FEFC",
+      "spns": [
+        {
+          "spn": 70,
+          "name": "Parking Brake Switch",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 527,
+          "name": "Cruise Control States",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5464,
+          "name": "Hybrid Battery Pack Remaining Charge",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1807,
+          "name": "Steering Wheel Angle",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 13171,
+          "name": "DC Charging State",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 15268,
+          "name": "HVESS Estimated Remaining Distance",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 241,
+          "name": "Tire Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 929,
+          "name": "Tire Location",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8428,
+          "name": "Fuel Supply Estimated Remaining Distance",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 97,
+          "name": "Water In Fuel Indicator 1",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5837,
+          "name": "Fuel Type list",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1810,
+          "name": "Longitudinal Acceleration",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1809,
+          "name": "Lateral Acceleration",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8235,
+          "name": "HVESS Thermal Management System Mode",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 7315,
+          "name": "Propulsion System Active",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 175,
+          "name": "Engine Oil Temperature 1",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 100,
+          "name": "Engine Oil Pressure 1",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 170,
+          "name": "Cab Interior Temperature",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 177,
+          "name": "Transmission Oil Temperature 1",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8211,
+          "name": "HVESS Total Energy Throughput",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 250,
+          "name": "Engine total fuel used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 250,
+          "name": "Engine total fuel used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 250,
+          "name": "Engine total fuel used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 250,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 96,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 38,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 513,
+          "name": "Engine speed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 190,
+          "name": "Engine speed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 190,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 247,
+          "name": "Engine total hours of",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 247,
+          "name": "Engine total hours of",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 247,
+          "name": "Engine total hours of",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 247,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Vehicle identification",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 237,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2806,
+          "name": "SW-version supported",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2806,
+          "name": "SW-version supported",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2806,
+          "name": "SW-version supported",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2806,
+          "name": "Reserved for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2805,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 2804,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 917,
+          "name": "High resolution total",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 917,
+          "name": "High resolution total",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 917,
+          "name": "High resolution total",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 917,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1611,
+          "name": "Vehicle Overspeed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1614,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1619,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1624,
+          "name": "Tachogr. Vehicle speed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1624,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1613,
+          "name": "Driver 1 card",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1615,
+          "name": "Driver 2 card",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1616,
+          "name": "Tachgraph performance",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1620,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1612,
+          "name": "Driv. 1 time rel states",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1617,
+          "name": "Driv 2 time rel. states",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1618,
+          "name": "Handling information",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1621,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1622,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 110,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 171,
+          "name": "Ambient Air",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 171,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 183,
+          "name": "Fuel Rate",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 183,
+          "name": "Instantaneous Fuel",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 184,
+          "name": "Instantaneous Fuel",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 184,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1087,
+          "name": "Service Brake Air",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1088,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5054,
+          "name": "High resolution engine",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5054,
+          "name": "High resolution engine",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5054,
+          "name": "High resolution engine",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5054,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1761,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 521,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3033,
+          "name": "and Right Brake Pedal Position SPN 30 32) the maximum of the two should be transmitted for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5837,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5458,
+          "name": "should either artificially display 0% or some number 10% or less i f the system has such resolution. If the ethanol in the",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5458,
+          "name": "shall report the calculated  ethanol/alcohol percentage.",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1040,
+          "name": "Total Fuel Used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1040,
+          "name": "Total Fuel Used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1040,
+          "name": "Total Fuel Used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1040,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 900,
+          "name": "Actual Retarder -",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 520,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1716,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 928,
+          "name": "Axle weight",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 582,
+          "name": "Axle weight",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 582,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 928,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 13171,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 15268,
+          "name": "HVESS Estimated",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 15268,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 929,
+          "name": "Tire Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 241,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 97,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8428,
+          "name": "Fuel Supply Estimated",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8428,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 15268,
+          "name": "is used for BEV instead of SPN 8428.",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 84,
+          "name": "Wheel based speed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 84,
+          "name": "Clutch switch",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 598,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 597,
+          "name": "PTO state",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 976,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 595,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3948,
+          "name": "(PTO DE) or SPN 976 (CCVS) is sent. PTO DE message is preferred",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 91,
+          "name": "Engine Percent Load",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 92,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 914,
+          "name": "Service distance",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 914,
+          "name": "Not used",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 911,
+          "name": "-913, 1379, and 1584)",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3948,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3948,
+          "name": "(PTO DE) or SPN 976 (CCVS) is sent. PTO DE message is preferred",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1760,
+          "name": "Gross Combination",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1760,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 84,
+          "name": "Wheel based speed",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 84,
+          "name": "Clutch switch",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 598,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 597,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 595,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 91,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3411,
+          "name": "Not used in Bus -",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1820,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1821,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3415,
+          "name": "Open Status Door 3",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3419,
+          "name": "Enable Status Door 4",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3423,
+          "name": "Lock Status Door 6",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3427,
+          "name": "Open Status Door 7",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3431,
+          "name": "Enable Status Door 8",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3435,
+          "name": "Lock Status Door 10",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3439,
+          "name": "Not defined  Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3414,
+          "name": "Lock Status Door 3",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3418,
+          "name": "Open Status Door 4",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3422,
+          "name": "Enable Status Door 5",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3426,
+          "name": "Lock Status Door 7",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3430,
+          "name": "Open Status Door 8",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3434,
+          "name": "Enable Status Door 9",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3438,
+          "name": "Not defined  Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3413,
+          "name": "Enable Status Door 2",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3417,
+          "name": "Lock Status Door 4",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3421,
+          "name": "Open Status Door 5",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3425,
+          "name": "Enable Status Door 6",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3429,
+          "name": "Lock Status Door 8",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3433,
+          "name": "Open Status Door 9",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3437,
+          "name": "Enable Status Door 10",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3441,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3412,
+          "name": "Open Status Door 2",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3416,
+          "name": "Enable Status Door 3",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3420,
+          "name": "Lock Status Door 5",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3424,
+          "name": "Open Status Door 6",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3428,
+          "name": "Enable Status Door 7",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3432,
+          "name": "Lock Status Door 9",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3436,
+          "name": "Open Status Door 10",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3440,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 959,
+          "name": "Minutes",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 960,
+          "name": "Hours",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 961,
+          "name": "Month",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 963,
+          "name": "Day",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 962,
+          "name": "Year",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 964,
+          "name": "Not used in",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3356,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3355,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3354,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3353,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 524,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 523,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1725,
+          "name": "Bellow Pressure Front Axle",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1725,
+          "name": "Bellow Pressure Front",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1726,
+          "name": "Bellow Pressure Front",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1726,
+          "name": "Bellow Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1727,
+          "name": "Bellow Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1727,
+          "name": "Bellow Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1728,
+          "name": "Bellow Pressure",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1728,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5464,
+          "name": "Hybrid Battery Pack",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5464,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1807,
+          "name": "Steering Wheel Angle",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1807,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1809,
+          "name": "Lateral Acceleration",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1809,
+          "name": "Longitudinal",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 1810,
+          "name": "Name",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5347,
+          "name": "for an alte rnate range and resolution.",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5348,
+          "name": "for an alternate longitudinal acceleration.",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 110,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 175,
+          "name": "Engine Oil",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 175,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 170,
+          "name": "Cab interior",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 170,
+          "name": "Ambient Air",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 171,
+          "name": "Ambient Air",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 171,
+          "name": "Not used for",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8235,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8211,
+          "name": "HVESS Total Energy",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8211,
+          "name": "HVESS Total Energy",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8211,
+          "name": "HVESS Total Energy",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8211,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 7315,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 8267,
+          "name": "for an in dication of hybrid system propulsion availability.",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 100,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 177,
+          "name": "Transmission Oil",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 177,
+          "name": "Not used in Bus",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 5054,
+          "name": "is available",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 15268,
+          "name": "is used for BEV instead of SPN 8428",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3948,
+          "name": "(PTODE) or SPN 976 is sent  SPN 3948 (PTO DE) message is preferred",
+          "resolution": "Unknown"
+        },
+        {
+          "spn": 3948,
+          "name": "or SPN 976 (CCVS) is sent  SPN 3948 (PTO DE) message is preferred",
+          "resolution": "Unknown"
+        }
+      ]
+    },
+    {
+      "pgn": "00FEF1",
+      "spns": [
+        {
+          "spn": 38,
+          "name": "Fuel Level 2",
+          "resolution": "Unknown"
+        }
+      ]
+    }
+  ],
+  "obd2": [
+    {
+      "pid": "0C",
+      "name": "Engine RPM",
+      "formula": "(A*256+B)/4",
+      "unit": "rpm"
+    },
+    {
+      "pid": "0D",
+      "name": "Vehicle Speed",
+      "formula": "A",
+      "unit": "km/h"
+    }
+  ]
+}

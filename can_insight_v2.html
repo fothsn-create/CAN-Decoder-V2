@@ -1,0 +1,1911 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAN Insight | Fleet Behavior & PGN Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #071428; --panel: #0e2240; --accent: #00c8dc;
+            --text: #ffffff; --text-secondary: #7b9ab8; --border: rgba(0, 200, 220, 0.18); --danger: #ff4757;
+            --bg-secondary: #0b1d36; --success: #00d4a0; --warning: #c8f000;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Figtree', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; line-height: 1.6; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, rgba(0,200,220,0.08) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
+        header { padding: 1rem 2rem; background: var(--bg-secondary); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; z-index: 100; backdrop-filter: blur(12px); box-shadow: 0 4px 24px rgba(0,0,0,0.4); position: sticky; top: 0; }
+        .logo-group { display: flex; align-items: center; gap: 15px; }
+        .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; background: linear-gradient(135deg, #ffffff 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: slideIn 0.6s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        main { display: grid; grid-template-columns: 320px 1fr 420px; gap: 1rem; padding: 1rem; flex: 1; overflow: hidden; animation: fadeIn 0.8s ease-out 0.2s both; }
+        .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: box-shadow 0.3s ease; }
+        .panel:hover { box-shadow: 0 8px 32px rgba(0, 200, 220, 0.1); }
+        .panel-header { padding: 12px 15px; background: var(--bg-secondary); border-bottom: 2px solid var(--border); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: 0.08em; display: flex; justify-content: space-between; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 15px; scrollbar-width: thin; scrollbar-color: rgba(0,200,220,0.3) transparent; }
+        
+        /* Dashboard Widgets */
+        .gauge { background: var(--bg-secondary); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); border-left: 4px solid var(--accent); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .gauge:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 200, 220, 0.15); border-color: var(--accent); }
+        .gauge-val { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 700; display: block; }
+        .gauge-label { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        /* PGN Group Styles for Telemetry Summary */
+        .pgn-group { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .pgn-group-header { background: var(--bg-secondary); padding: 10px 12px; font-weight: 600; color: var(--accent); cursor: pointer; user-select: none; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s ease; }
+        .pgn-group-header:hover { background: rgba(0, 200, 220, 0.08); }
+        .pgn-group-content { background: var(--panel); }
+        .pgn-param-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 0.75rem; }
+        .pgn-param-name { color: var(--text-secondary); }
+        .pgn-param-value { color: var(--text); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .pgn-param-unit { color: var(--text-secondary); }
+        .pgn-group.collapsed .pgn-group-content { display: none; }
+        .pgn-group.collapsed .expand-icon { transform: rotate(-90deg); }
+        .expand-icon { transition: transform 0.2s; font-size: 0.7rem; }
+        .section-divider { color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+        th { text-align: left; padding: 10px; border-bottom: 2px solid var(--border); color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; background: var(--bg-secondary); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tbody tr { transition: background 0.2s ease; }
+        tbody tr:hover { background: rgba(0, 200, 220, 0.05); }
+        .tag { background: rgba(0, 200, 220, 0.12); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-weight: 600; }
+        .event-item { border-left: 3px solid var(--danger); background: rgba(255, 71, 87, 0.08); padding: 10px; margin-bottom: 8px; border-radius: 8px; font-size: 0.75rem; }
+
+        /* UI Elements */
+        #drop-zone { border: 2px dashed var(--border); padding: 60px 20px; text-align: center; border-radius: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.3s ease; background: rgba(0, 200, 220, 0.03); }
+        #drop-zone:hover { border-color: var(--accent); background: rgba(0, 200, 220, 0.08); }
+        #drop-zone.active { border-color: var(--accent); background: rgba(0, 200, 220, 0.15); color: var(--accent); transform: scale(1.02); }
+        .btn { background: var(--accent); color: #071428; border: 2px solid var(--accent); padding: 8px 16px; border-radius: 6px; font-family: 'Figtree', sans-serif; font-weight: 700; cursor: pointer; font-size: 0.8rem; transition: all 0.3s ease; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(0, 200, 220, 0.25); }
+        .btn:hover { background: transparent; color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 200, 220, 0.35); }
+        
+        /* Export Button */
+        .export-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.1rem; padding: 4px 8px; transition: all 0.3s ease; opacity: 0.8; }
+        .export-btn:hover { opacity: 1; transform: scale(1.2); }
+        
+        .chart-wrap { height: 100%; min-height: 400px; display: flex; flex-direction: column; }
+        #mainChart { flex: 1; }
+        
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 1rem 0 1rem;
+            border-bottom: 2px solid var(--border);
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .tab {
+            font-family: 'Figtree', sans-serif;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: var(--accent);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--accent);
+        }
+
+        .tab.active::after {
+            width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-group">
+        <div class="logo">CAN INSIGHT PRO</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">By Nigel F</div>
+        <div style="height: 20px; width: 1px; background: var(--border);"></div>
+        <div id="file-status" style="font-size: 0.75rem; color: var(--text-secondary);">Ready for Log Analysis</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="file-info" style="font-size: 0.7rem; color: var(--text-secondary); text-align: right; white-space: nowrap;"></span>
+        <button class="btn" onclick="document.getElementById('file-input').click()">LOAD LOG CSV</button>
+        <input type="file" id="file-input" hidden accept=".csv">
+    </div>
+</header>
+
+<!-- Tab Navigation -->
+<div class="tabs">
+    <button type="button" class="tab active" onclick="switchTab(0)">Raw Data</button>
+    <button type="button" class="tab" onclick="switchTab(1)">Timeline</button>
+    <button type="button" class="tab" onclick="switchTab(2)">Tachograph</button>
+</div>
+
+<!-- Raw Data Tab -->
+<div id="tab-0" class="tab-content active">
+<main>
+    <!-- LEFT: Real-time Telemetry -->
+    <div class="panel">
+        <div class="panel-header"><span>Telemetry Summary</span></div>
+        <div class="scroll-area">
+            <div class="gauge" id="vin-vrn-gauge" style="border-left-color: #e879f9;" title="Vehicle Identification (VIN / VRN)">
+                <span class="gauge-label" id="g-vin-label">VIN & VRN Detected</span>
+                <span class="gauge-val" id="g-vin" style="color: #e879f9; font-size: 1rem;">—</span>
+                <span class="gauge-label" id="g-vrn" style="color: #c084fc; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;"></span>
+                <span class="gauge-label" id="g-make" style="color: #a78bfa; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;"></span>
+            </div>
+            <div class="gauge" id="rpm-detected-gauge" style="border-left-color: #3b82f6;" title="RPM Data Detected in Log">
+                <span class="gauge-label">RPM Detected</span>
+                <span class="gauge-val" id="g-rpm-detected" style="color: #3b82f6; font-size: 1.2rem;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #22c55e;" title="Fuel Level (FEFC - DD1)">
+                <span class="gauge-label">Fuel Level (%)</span>
+                <span class="gauge-val" id="g-fuel" style="color: #22c55e;">0</span>
+            </div>
+            <div class="gauge" style="border-left-color: #eab308;" title="Odometer (FEE0 - VD / FEC1 - VDHR)">
+                <span class="gauge-label">Total Distance (km)</span>
+                <span class="gauge-val" id="g-odo" style="color: #eab308;">0</span>
+                <span class="gauge-label" id="g-odo-miles" style="color: #eab308; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">0 miles</span>
+            </div>
+            <div class="gauge" id="pto-gauge" style="border-left-color: #f97316;" title="FMS PTO Status (CCVS1/PTODE)">
+                <span class="gauge-label">FMS PTO Status</span>
+                <span class="gauge-val" id="g-pto" style="color: #f97316;">—</span>
+                <span class="gauge-label" id="g-pto-pgn" style="color: #f97316; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;"></span>
+                <span class="gauge-label" id="g-pto-sa" style="color: #3b82f6; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;"></span>
+            </div>
+            <div class="gauge" style="border-left-color: #38bdf8;" title="DEF Tank Level (FE56 - AT1T1I)">
+                <span class="gauge-label">DEF Tank Level (%)</span>
+                <span class="gauge-val" id="g-def" style="color: #38bdf8;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #ef4444;" title="Engine Coolant Temperature (FEEE - ET1)">
+                <span class="gauge-label">Coolant Temp (°C)</span>
+                <span class="gauge-val" id="g-coolant" style="color: #ef4444;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #a78bfa;" title="Current Gear (F005 - ETC2)">
+                <span class="gauge-label">Current Gear</span>
+                <span class="gauge-val" id="g-gear" style="color: #a78bfa;">—</span>
+                <span class="gauge-label" id="g-gear-selected" style="color: #c084fc; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;"></span>
+            </div>
+            <div class="gauge" style="border-left-color: #f59e0b;" title="Battery Voltage (FEF7 - VEP)">
+                <span class="gauge-label">Battery Voltage (V)</span>
+                <span class="gauge-val" id="g-battery" style="color: #f59e0b;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #64748b;" title="Engine Hours (FEE5 - HOURS)">
+                <span class="gauge-label">Engine Hours</span>
+                <span class="gauge-val" id="g-hours" style="color: #64748b;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #fb923c;" title="Engine Oil Temperature (FEEE - ET1)">
+                <span class="gauge-label">Oil Temp (°C)</span>
+                <span class="gauge-val" id="g-oiltemp" style="color: #fb923c;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #d946ef;" title="Gross Combination Weight (FE70 - CVW)">
+                <span class="gauge-label">Gross Weight (kg)</span>
+                <span class="gauge-val" id="g-gcw" style="color: #d946ef;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #14b8a6;" title="Ambient Air Temperature (FEF5 - AMB)">
+                <span class="gauge-label">Ambient Temp (°C)</span>
+                <span class="gauge-val" id="g-ambient" style="color: #14b8a6;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #e11d48;" title="Engine Oil Pressure (FEEF - EFL/P1)">
+                <span class="gauge-label">Oil Pressure (kPa)</span>
+                <span class="gauge-val" id="g-oilpress" style="color: #e11d48;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #8b5cf6;" title="Transmission Oil Temperature (FEF8 - TRF1)">
+                <span class="gauge-label">Trans Oil Temp (°C)</span>
+                <span class="gauge-val" id="g-transoil" style="color: #8b5cf6;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #0ea5e9;" title="Service Distance (FEC0 - SERV)">
+                <span class="gauge-label">Service Distance (km)</span>
+                <span class="gauge-val" id="g-service" style="color: #0ea5e9;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #f43f5e;" title="Fuel Rate (FEF2 - LFE)">
+                <span class="gauge-label">Fuel Rate (L/h)</span>
+                <span class="gauge-val" id="g-fuelrate" style="color: #f43f5e;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #84cc16;" title="Fuel Range (FEFF - WIF/FR)">
+                <span class="gauge-label">Fuel Range (km)</span>
+                <span class="gauge-val" id="g-fuelrange" style="color: #84cc16;">—</span>
+            </div>
+            <div class="gauge" style="border-left-color: #06b6d4;" title="EV Battery Charge (FCB7 - VEP4)">
+                <span class="gauge-label">EV Battery (%)</span>
+                <span class="gauge-val" id="g-evbattery" style="color: #06b6d4;">—</span>
+            </div>
+            <div class="gauge" id="rtd-gauge" style="border-left-color: #06b6d4;" title="Remote Tachograph Download (RTD) - ISO 16844-6">
+                <span class="gauge-label">RTD (Remote Tacho Download)</span>
+                <span class="gauge-val" id="g-rtd" style="color: #06b6d4; font-size: 1.2rem;">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTER: Data Overview -->
+    <div class="panel">
+        <div class="panel-header">
+            <span>Data Overview</span>
+            <button class="export-btn" onclick="exportDataOverview()" title="Export to Excel">📥</button>
+        </div>
+        <div class="scroll-area">
+            <div class="section-divider">All PGN Data Points</div>
+            <div id="all-pgn-data">
+                <p style="color: #64748b; font-size: 0.75rem;">Load a CSV file to see all decoded PGN parameters...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Message Inventory -->
+    <div class="panel">
+        <div class="panel-header">
+            <span>Vehicle Supported PGNs</span>
+            <button class="export-btn" onclick="exportVehicleSupportedPGNs()" title="Export to Excel">📥</button>
+        </div>
+        <div class="scroll-area">
+            <table id="inventory-table">
+                <thead><tr><th>PGN</th><th>Description</th><th>SPNs</th></tr></thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- Timeline Tab -->
+<div id="tab-1" class="tab-content">
+    <div style="padding: 1rem; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="panel-header"><span>RPM Analysis & Timeline</span> <span id="event-count" style="color: var(--danger)"></span></div>
+            <div class="scroll-area">
+                <div id="drop-zone">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
+                    Drop IXXAT Export (MiniMon or canAnalyser)
+                </div>
+                <div class="chart-wrap" id="chart-container" style="display:none;">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <div id="safety-log" style="margin-top: 20px;">
+                    <!-- Harsh events appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tachograph Tab -->
+<div id="tab-2" class="tab-content">
+    <div style="padding: 1rem; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="panel-header"><span>Tachograph & RTD Data</span></div>
+            <div class="scroll-area" id="tachograph-content">
+                <p style="color: var(--text-secondary); padding: 20px; text-align: center;">
+                    Load a CSV file to view Remote Tachograph Download (RTD) data and diagnostic information.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="pgn_library.js"></script>
+<script>
+    // Configuration constants
+    const HARSH_BRAKE_MIN_SPEED = 5; // km/h - minimum speed to detect harsh braking
+    const HARSH_BRAKE_THRESHOLD = 10; // km/h - speed reduction threshold for harsh braking
+    const CHART_SAMPLE_RATE = 15; // Sample every Nth message for chart
+
+    // Global tracking variables
+    let rpmDetected = false; // Track whether RPM/EngineSpeed data exists in the current log file
+    let maxRpmValue = 0; // Track the maximum RPM value to prevent false positives
+    let detectedBaudRate = ''; // Track detected CAN baud rate
+    let detectedVIN = ''; // Track detected VIN globally
+    let detectedMake = ''; // Track detected vehicle make globally
+    
+    // Use the library from external file, fallback to basic if not available
+    const PGN_LIB = typeof PGN_LIBRARY !== 'undefined' ? PGN_LIBRARY : {
+        "F004": {"name": "Electronic Engine Controller 1 (EEC1)", "spns": [{"n": "EngineSpeed", "b": 3, "l": 2, "r": 0.125, "o": 0, "unit": "rpm"}]},
+        "F003": {"name": "Electronic Engine Controller 2 (EEC2)", "spns": [{"n": "AccelPedalPos", "b": 1, "l": 1, "r": 0.4, "o": 0, "unit": "%"}, {"n": "EngineLoad", "b": 2, "l": 1, "r": 1, "o": 0, "unit": "%"}]},
+        "FEF1": {"name": "Cruise Control/Vehicle Speed 1 (CCVS1)", "spns": [{"n": "VehicleSpeed", "b": 1, "l": 2, "r": 0.00390625, "o": 0, "unit": "km/h"}, {"n": "ParkingBrakeSwitch", "b": 3, "l": 1, "m": 0x0C, "s": 2, "unit": ""}]},
+        "FEFC": {"name": "Dash Display 1 (DD1)", "spns": [{"n": "FuelLevel", "b": 1, "l": 1, "r": 0.4, "o": 0, "unit": "%"}]},
+        "FEE0": {"name": "Vehicle Distance (VD)", "spns": [{"n": "TotalDistance", "b": 0, "l": 4, "r": 0.125, "o": 0, "unit": "km"}]},
+        "FEEA": {"name": "Vehicle Weight (VW)", "spns": [{"n": "AxleWeight1", "b": 2, "l": 2, "r": 0.5, "o": 0, "unit": "kg"}]},
+        "F005": {"name": "Electronic Transmission Controller 2 (ETC2)", "spns": [{"n": "SelectedGear", "b": 0, "l": 1, "r": 1, "o": -125, "unit": "gear"}, {"n": "CurrentGear", "b": 3, "l": 1, "r": 1, "o": -125, "unit": "gear"}]},
+        "F001": {"name": "Electronic Brake Controller 1 (EBC1)", "spns": [{"n": "BrakePedalPosition", "b": 1, "l": 1, "r": 0.4, "o": 0, "unit": "%"}]},
+        "FE56": {"name": "Aftertreatment 1 Diesel Exhaust Fluid Tank 1 Information (AT1T1I)", "spns": [{"n": "DEFTankLevel", "b": 0, "l": 1, "r": 0.4, "o": 0, "unit": "%"}]},
+        "FEEE": {"name": "Engine Temperature 1 (ET1)", "spns": [{"n": "CoolantTemp", "b": 0, "l": 1, "r": 1, "o": -40, "unit": "°C"}, {"n": "EngineOilTemp", "b": 2, "l": 2, "r": 0.03125, "o": -273, "unit": "°C"}]},
+        "FEF7": {"name": "Vehicle Electrical Power (VEP)", "spns": [{"n": "BatteryVoltage", "b": 4, "l": 2, "r": 0.05, "o": 0, "unit": "V"}]},
+        "FEE5": {"name": "Engine Hours, Revolutions (HOURS)", "spns": [{"n": "TotalEngineHours", "b": 0, "l": 4, "r": 0.05, "o": 0, "unit": "h"}]},
+        "FD09": {"name": "High Resolution Fuel Consumption (Liquid) (HRLFC)", "spns": [{"n": "HighResFuelConsumption", "b": 4, "l": 4, "r": 0.001, "o": 0, "unit": "L"}]},
+        "FEF2": {"name": "Fuel Economy (LFE)", "spns": [{"n": "FuelRate", "b": 0, "l": 2, "r": 0.05, "o": 0, "unit": "L/h"}, {"n": "InstantFuelEcon", "b": 2, "l": 2, "r": 0.001953125, "o": 0, "unit": "km/L"}]},
+        "FEF5": {"name": "Ambient Conditions (AMB)", "spns": [{"n": "AmbientAirTemp", "b": 3, "l": 2, "r": 0.03125, "o": -273, "unit": "°C"}]},
+        "FEC0": {"name": "Service Information (SERV)", "spns": [{"n": "ServiceDistance", "b": 1, "l": 2, "r": 5, "o": -160635, "unit": "km"}]},
+        "FE70": {"name": "Combination Vehicle Weight (CVW)", "spns": [{"n": "GrossCombinationWeight", "b": 2, "l": 2, "r": 10, "o": 0, "unit": "kg"}]},
+        "FEEF": {"name": "Engine Fluid Level/Pressure 1 (EFL/P1)", "spns": [{"n": "EngineOilPressure", "b": 3, "l": 1, "r": 4, "o": 0, "unit": "kPa"}]},
+        "FEF8": {"name": "Transmission Fluids 1 (TRF1)", "spns": [{"n": "TransmissionOilTemp", "b": 4, "l": 2, "r": 0.03125, "o": -273, "unit": "°C"}]},
+        "FDC2": {"name": "Electronic Engine Controller 14 (EEC14)", "spns": [{"n": "FuelType", "b": 6, "l": 1, "r": 1, "o": 0, "unit": ""}]},
+        "FAB8": {"name": "EVSE 1 DC Charging Status 1 (EVSE1DCS1)", "spns": [{"n": "DCChargingState", "b": 0, "l": 1, "m": 0x0F, "s": 0, "unit": ""}]},
+        "FC69": {"name": "HVESS Estimated Remaining Distance", "spns": [{"n": "HVESSEstRemainingDistance", "b": 0, "l": 2, "r": 0.25, "o": 0, "unit": "km"}]},
+        "FEFF": {"name": "Water In Fuel Indicator 1 / Fuel Range (WIF/FR)", "spns": [{"n": "WaterInFuelIndicator", "b": 0, "l": 1, "m": 0x03, "s": 0, "unit": ""}, {"n": "FuelSupplyEstRemainingDist", "b": 2, "l": 2, "r": 1, "o": 0, "unit": "km"}]},
+        "FED5": {"name": "Alternator Speed (AS)", "spns": [{"n": "AlternatorStatus1", "b": 2, "l": 1, "m": 0xC0, "s": 6, "unit": ""}]},
+        "FCB7": {"name": "Vehicle Electrical Power #4 (VEP4)", "spns": [{"n": "HybridBatteryPackRemainingCharge", "b": 0, "l": 2, "r": 0.0025, "o": 0, "unit": "%"}]},
+        "FCC2": {"name": "Propulsion System Active", "spns": [{"n": "PropulsionSystemActive", "b": 1, "l": 1, "m": 0x03, "s": 0, "unit": ""}]},
+        "FC5E": {"name": "High Voltage Energy Storage System History (HVESSHIST)", "spns": [{"n": "HVESSTotalEnergyThroughput", "b": 4, "l": 4, "r": 100, "o": 0, "unit": "Wh"}]},
+        "FE6C": {"name": "Tachograph (TCO1)", "spns": [{"n": "VehicleMotion", "spn": 1611, "b": 0, "l": 1, "m": 0x03, "s": 0, "unit": "", "labels": {0: "Not Detected", 1: "Detected", 2: "Error", 3: "Not Available"}}, {"n": "VehicleOverspeed", "spn": 1614, "b": 0, "l": 1, "m": 0x0C, "s": 2, "unit": "", "labels": {0: "No Overspeed", 1: "Overspeed", 2: "Error", 3: "Not Available"}}, {"n": "DirectionIndicator", "spn": 1619, "b": 0, "l": 1, "m": 0x30, "s": 4, "unit": "", "labels": {0: "Forward", 1: "Reverse", 2: "Error", 3: "Not Available"}}, {"n": "Driver2WorkingState", "spn": 1613, "b": 1, "l": 1, "m": 0x07, "s": 0, "unit": "", "labels": {0: "Rest", 1: "Available", 2: "Work", 3: "Drive", 6: "Error", 7: "Not Available"}}, {"n": "Driver1Card", "spn": 1615, "b": 1, "l": 1, "m": 0x18, "s": 3, "unit": "", "labels": {0: "Not Present", 1: "Present", 2: "Error", 3: "Not Available"}}, {"n": "Driver2Card", "spn": 1616, "b": 1, "l": 1, "m": 0x60, "s": 5, "unit": "", "labels": {0: "Not Present", 1: "Present", 2: "Error", 3: "Not Available"}}, {"n": "TachoPerformance", "spn": 1620, "b": 1, "l": 1, "m": 0x80, "s": 7, "unit": "", "labels": {0: "Normal Performance", 1: "Performance Analysis"}}, {"n": "Driver1WorkingState", "spn": 1612, "b": 2, "l": 1, "m": 0x07, "s": 0, "unit": "", "labels": {0: "Rest", 1: "Available", 2: "Work", 3: "Drive", 6: "Error", 7: "Not Available"}}, {"n": "Driver1TimeRelatedState", "spn": 1617, "b": 2, "l": 1, "m": 0x78, "s": 3, "unit": "", "labels": {0: "Normal", 1: "15 min before 4½h", 2: "4½h reached", 3: "15 min before 9h", 4: "9h reached", 5: "15 min before 16h", 6: "16h reached", 14: "Error", 15: "Not Available"}}, {"n": "Driver2TimeRelatedState", "spn": 1618, "b": 3, "l": 1, "m": 0x0F, "s": 0, "unit": "", "labels": {0: "Normal", 1: "15 min before 4½h", 2: "4½h reached", 3: "15 min before 9h", 4: "9h reached", 5: "15 min before 16h", 6: "16h reached", 14: "Error", 15: "Not Available"}}, {"n": "HandlingInformation", "spn": 1621, "b": 3, "l": 1, "m": 0x30, "s": 4, "unit": "", "labels": {0: "No Info", 1: "Info Present", 2: "Error", 3: "Not Available"}}, {"n": "SystemEvent", "spn": 1622, "b": 3, "l": 1, "m": 0xC0, "s": 6, "unit": "", "labels": {0: "No Event", 1: "Event Occurred", 2: "Error", 3: "Not Available"}}, {"n": "TachoVehicleSpeed", "spn": 1624, "b": 4, "l": 2, "r": 0.00390625, "o": 0, "unit": "km/h"}]}
+    };
+
+    let chart;
+    let chartData = { 
+        rpm: [], 
+        accelPedal: [],
+        brakePedal: [],
+        engineLoad: [],
+        pto: [],
+        labels: [] 
+    };
+    let pgnData = {};   // Decoded PGN values (populated by analyze, used by exports)
+    let inventory = {}; // PGN message counts (populated by analyze, used by exports)
+
+    window.onload = () => {
+        initChart();
+        const fi = document.getElementById('file-input');
+        const dz = document.getElementById('drop-zone');
+
+        fi.onchange = (e) => handleFile(e.target.files[0]);
+        dz.onclick = () => fi.click();
+        
+        window.ondragover = (e) => { e.preventDefault(); dz.classList.add('active'); };
+        window.ondragleave = () => dz.classList.remove('active');
+        window.ondrop = (e) => { e.preventDefault(); dz.classList.remove('active'); handleFile(e.dataTransfer.files[0]); };
+    };
+
+    function initChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { 
+                    label: 'RPM', 
+                    data: [], 
+                    borderColor: '#00f2ff', 
+                    backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                    yAxisID: 'y-rpm', 
+                    pointRadius: 0, 
+                    tension: 0.3, 
+                    borderWidth: 2 
+                },
+                { 
+                    label: 'Accelerator Pedal (%)', 
+                    data: [], 
+                    borderColor: '#22c55e', 
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    yAxisID: 'y-percent', 
+                    pointRadius: 0, 
+                    tension: 0.3, 
+                    borderWidth: 2 
+                },
+                { 
+                    label: 'Brake Pedal (%)', 
+                    data: [], 
+                    borderColor: '#ff4757', 
+                    backgroundColor: 'rgba(255, 71, 87, 0.1)',
+                    yAxisID: 'y-percent', 
+                    pointRadius: 0, 
+                    tension: 0.3, 
+                    borderWidth: 2 
+                },
+                { 
+                    label: 'Engine Load (%)', 
+                    data: [], 
+                    borderColor: '#f59e0b', 
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    yAxisID: 'y-percent', 
+                    pointRadius: 0, 
+                    tension: 0.3, 
+                    borderWidth: 2 
+                },
+                { 
+                    label: 'PTO State', 
+                    data: [], 
+                    borderColor: '#f97316', 
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    yAxisID: 'y-binary', 
+                    pointRadius: 0, 
+                    tension: 0, 
+                    borderWidth: 3,
+                    stepped: true
+                }
+            ]},
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    'y-rpm': { 
+                        type: 'linear',
+                        position: 'left', 
+                        grid: { color: '#1e293b' }, 
+                        ticks: { color: '#00f2ff' }, 
+                        title: { display: true, text: 'RPM', color: '#00f2ff' },
+                        min: 0
+                    },
+                    'y-percent': { 
+                        type: 'linear',
+                        position: 'right', 
+                        grid: { display: false }, 
+                        ticks: { color: '#22c55e' }, 
+                        title: { display: true, text: 'Percentage (%)', color: '#22c55e' },
+                        min: 0,
+                        max: 100
+                    },
+                    'y-binary': { 
+                        type: 'linear',
+                        position: 'right', 
+                        grid: { display: false }, 
+                        ticks: { 
+                            color: '#f97316',
+                            stepSize: 1,
+                            callback: function(value) {
+                                if (value === 1) return 'ON';
+                                return 'OFF';
+                            }
+                        }, 
+                        title: { display: true, text: 'PTO', color: '#f97316' },
+                        min: 0,
+                        max: 1
+                    }
+                },
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#94a3b8',
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }, 
+                    tooltip: { 
+                        mode: 'index', 
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#00f2ff',
+                        bodyColor: '#94a3b8',
+                        borderColor: '#00f2ff',
+                        borderWidth: 1
+                    } 
+                }
+            }
+        });
+    }
+
+    function handleFile(file) {
+        if(!file) return;
+        document.getElementById('file-status').innerText = "Processing: " + file.name;
+        const fileDate = file.lastModified ? new Date(file.lastModified).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+        document.getElementById('file-info').innerText = file.name + (fileDate ? ' | ' + fileDate : '');
+        document.getElementById('file-info').title = file.name + (fileDate ? '\nDate: ' + fileDate : '');
+        document.getElementById('drop-zone').style.display = 'none';
+        document.getElementById('chart-container').style.display = 'block';
+
+        // Read file as text first to handle IXXAT metadata
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            let csvText = e.target.result;
+            
+            // Parse baud rate from IXXAT MiniMon metadata header if present
+            detectedBaudRate = ''; // Reset global variable
+            const lines = csvText.trim().split('\n');
+            
+            // Look for Baudrate in metadata header (first 15 lines)
+            for (let i = 0; i < Math.min(lines.length, 15); i++) {
+                const line = lines[i];
+                // Match "Baudrate: 500 kbit/s" or "Baudrate: 250 kbit/s"
+                const baudMatch = line.match(/Baudrate:\s*(\d+)\s*kbit/i);
+                if (baudMatch) {
+                    const baudValue = parseInt(baudMatch[1]);
+                    if (baudValue === 500) {
+                        detectedBaudRate = '500 kbps';
+                    } else if (baudValue === 250) {
+                        detectedBaudRate = '250 kbps';
+                    }
+                    break;
+                }
+            }
+            
+            // Skip IXXAT MiniMon metadata header lines if present
+            let startLine = 0;
+            
+            // Look for actual data header (Time, Identifier, Data columns)
+            for (let i = 0; i < Math.min(lines.length, 10); i++) {
+                if (lines[i].match(/[",]Time[",]/i) && lines[i].match(/Identifier/i) && lines[i].match(/Data/i)) {
+                    startLine = i;
+                    break;
+                }
+            }
+            
+            // Reconstruct CSV from the data start line
+            if (startLine > 0) {
+                csvText = lines.slice(startLine).join('\n');
+            }
+            
+            // Now parse with PapaParse
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => analyze(results)
+            });
+        };
+        reader.readAsText(file);
+    }
+
+    /**
+     * Decode a value from CAN data bytes
+     * @param {Array} bytes - Array of byte values
+     * @param {Object} spn - SPN definition with decoding parameters
+     * @returns {*} Decoded value (number or string)
+     */
+    function decodeValue(bytes, spn) {
+        if (!bytes || bytes.length === 0) return null;
+        
+        // Handle ASCII/string type
+        if (spn.type === 'ascii') {
+            let str = '';
+            for (let i = 0; i < spn.l && spn.b + i < bytes.length; i++) {
+                const byte = bytes[spn.b + i];
+                // Stop at null byte (0x00) or 0xFF (not available marker in J1939)
+                if (byte === 0x00 || byte === 0xFF) {
+                    break;
+                }
+                // Include printable ASCII characters
+                if (byte >= 32 && byte <= 126) {
+                    str += String.fromCharCode(byte);
+                } else if (byte > 0) {
+                    // For non-printable but non-null bytes, include them as-is
+                    // This ensures we don't lose data in driver IDs with special encoding
+                    str += String.fromCharCode(byte);
+                }
+            }
+            return str.trim();
+        }
+        
+        // Extract raw value based on length
+        let rawValue = 0;
+        if (spn.l === 1) {
+            rawValue = bytes[spn.b] || 0;
+        } else if (spn.l === 2) {
+            rawValue = (bytes[spn.b] || 0) + ((bytes[spn.b + 1] || 0) << 8);
+        } else if (spn.l === 4) {
+            rawValue = (bytes[spn.b] || 0) + 
+                      ((bytes[spn.b + 1] || 0) << 8) + 
+                      ((bytes[spn.b + 2] || 0) << 16) + 
+                      ((bytes[spn.b + 3] || 0) << 24);
+            // Handle unsigned to signed conversion for 32-bit
+            if (rawValue > 0x7FFFFFFF) {
+                rawValue = rawValue - 0x100000000;
+            }
+        } else {
+            return null;
+        }
+        
+        // Apply bit masking if defined
+        if (spn.m !== undefined) {
+            rawValue = (rawValue & spn.m) >> (spn.s || 0);
+        }
+        
+        // Check for invalid/error values (0xFF, 0xFFFF, etc.)
+        const maxVal = Math.pow(2, spn.l * 8) - 1;
+        if (rawValue === maxVal || rawValue === maxVal - 1) {
+            return null; // Not available/error
+        }
+        
+        // Apply scaling and offset
+        const scaledValue = (rawValue * (spn.r || 1)) + (spn.o || 0);
+        
+        return scaledValue;
+    }
+
+    function formatValue(v) {
+        if (typeof v === 'number') {
+            return v % 1 === 0 ? v.toLocaleString() : v.toFixed(2);
+        }
+        return v;
+    }
+
+    function analyze(results) {
+        const rows = results.data;
+        const cols = results.meta.fields;
+        
+        // Auto-detect column names (support various IXXAT export formats)
+        const idCol = cols.find(c => /id|identifier|can.*id/i.test(c));
+        const dataCol = cols.find(c => /data|payload/i.test(c));
+        const timeCol = cols.find(c => /time|timestamp/i.test(c));
+
+        if (!idCol || !dataCol) {
+            alert('Could not detect ID or Data columns in CSV. Expected columns like "ID" and "Data".');
+            return;
+        }
+
+        inventory = {};
+        pgnData = {}; // Track all decoded PGN values
+        chartData = { 
+            rpm: [], 
+            accelPedal: [],
+            brakePedal: [],
+            engineLoad: [],
+            pto: [],
+            labels: [] 
+        };
+        rpmDetected = false; // Reset RPM detection flag
+        maxRpmValue = 0; // Reset max RPM value
+        detectedVIN = ''; // Reset VIN for new file
+        detectedMake = ''; // Reset vehicle make for new file
+        const safetyLog = document.getElementById('safety-log');
+        const invBody = document.querySelector('#inventory-table tbody');
+        safetyLog.innerHTML = '<h3>Safety Analysis</h3>';
+        invBody.innerHTML = '';
+        
+        // Reset all gauge displays for new file
+        document.getElementById('g-fuel').innerText = '—';
+        document.getElementById('g-def').innerText = '—';
+        document.getElementById('g-vin').innerText = '—';
+        document.getElementById('g-vin-label').innerText = 'VIN & VRN';
+        document.getElementById('g-odo').innerText = '0';
+        document.getElementById('g-odo-miles').innerText = '0 miles';
+        document.getElementById('g-evbattery').innerText = '—';
+
+        let lastSpeed = 0;
+        let harshCount = 0;
+        let processedCount = 0;
+        // detectedVIN, detectedMake, detectedBaudRate are now global variables
+        let detectedVRN = '';
+        let isElectricVehicle = false; // Track if vehicle is electric/hybrid
+        let ptoDetected = false;
+        let ptoSourceAddresses = new Set();
+        let ptoStatus = '';
+        let ptoPgnSpns = [];
+        let rtdDetected = false;
+        let rtdMessages = [];
+        let rtdAddresses = new Set();
+        let rtdDIDData = {};
+        
+        // Note: detectedBaudRate is now parsed from CSV file header metadata
+        // No need for timing-based detection
+        let tpSessions = {}; // J1939 Transport Protocol reassembly sessions
+
+        rows.forEach((row, idx) => {
+            const idHex = (row[idCol] || "").trim().toUpperCase();
+            const rawHex = (row[dataCol] || "").replace(/[^0-9A-Fa-f]/g, '');
+            if(!idHex || rawHex.length < 2) return;
+
+            // Extract PGN from CAN ID (J1939 format)
+            // For 29-bit extended ID: bits 8-25 contain the PGN
+            let pgn = "";
+            let sourceAddress = "";
+            
+            // Try different ID formats
+            if (idHex.startsWith("0X")) {
+                // Handle hex with 0x prefix
+                const canId = parseInt(idHex, 16);
+                pgn = ((canId >> 8) & 0x3FFFF).toString(16).toUpperCase().padStart(4, '0');
+                sourceAddress = (canId & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+            } else if (idHex.length >= 6) {
+                // Extract last 4 hex digits before last 2 (standard IXXAT format)
+                pgn = idHex.substring(idHex.length - 6, idHex.length - 2).toUpperCase();
+                sourceAddress = idHex.substring(idHex.length - 2).toUpperCase();
+            } else if (idHex.length === 4) {
+                // Direct PGN format
+                pgn = idHex;
+            }
+
+            // J1939 Transport Protocol reassembly (BAM)
+            // TP.CM BAM (PGN ECFF): announces multi-frame transfer
+            // TP.DT (PGN EBFF): carries data payload in sequential frames
+            if (pgn === 'ECFF' || pgn === '1ECFF' || pgn.endsWith('ECFF')) {
+                const tpBytes = rawHex.match(/.{1,2}/g);
+                if (tpBytes && tpBytes.length >= 8) {
+                    const b = tpBytes.map(function(h) { return parseInt(h, 16); });
+                    if (b[0] === 0x20) { // BAM announcement
+                        const totalBytes = b[1] | (b[2] << 8);
+                        const numPackets = b[3];
+                        let carriedPgn = (b[5] | (b[6] << 8) | (b[7] << 16)).toString(16).toUpperCase().padStart(4, '0');
+                        // Use last 4 hex chars as PGN key
+                        if (carriedPgn.length > 4) carriedPgn = carriedPgn.slice(-4);
+                        tpSessions[sourceAddress] = {
+                            pgn: carriedPgn, totalBytes: totalBytes,
+                            numPackets: numPackets, data: [], packets: 0
+                        };
+                    }
+                }
+            } else if (pgn === 'EBFF' || pgn === '1EBFF' || pgn.endsWith('EBFF')) {
+                if (tpSessions[sourceAddress]) {
+                    const tpBytes = rawHex.match(/.{1,2}/g);
+                    if (tpBytes && tpBytes.length >= 2) {
+                        const b = tpBytes.map(function(h) { return parseInt(h, 16); });
+                        const session = tpSessions[sourceAddress];
+                        // Append payload bytes (skip sequence number byte 0)
+                        for (let bi = 1; bi < b.length && bi < 8; bi++) {
+                            session.data.push(b[bi]);
+                        }
+                        session.packets++;
+
+                        if (session.packets >= session.numPackets) {
+                            // Reassembly complete - decode the carried PGN
+                            const fullData = session.data.slice(0, session.totalBytes);
+                            const tpPgn = session.pgn;
+
+                            if (PGN_LIB[tpPgn]) {
+                                const def = PGN_LIB[tpPgn];
+                                if (!pgnData[tpPgn]) {
+                                    pgnData[tpPgn] = { name: def.name, params: {} };
+                                }
+                                inventory[tpPgn] = (inventory[tpPgn] || 0) + 1;
+                                def.spns.forEach(function(spn) {
+                                    const val = decodeValue(fullData, spn);
+                                    if (val === null) return;
+                                    const lbl = (spn.labels && spn.labels[val] !== undefined) ? spn.labels[val] : null;
+                                    pgnData[tpPgn].params[spn.n] = {
+                                        value: val, unit: spn.unit || '',
+                                        desc: spn.desc || spn.n, label: lbl,
+                                        spn: spn.spn // Store SPN number for display
+                                    };
+                                    if (spn.n === 'VehicleID' && val && !detectedVIN) detectedVIN = val;
+                                    if (spn.n === 'VehicleRegNumber' && val && !detectedVRN) detectedVRN = val;
+                                });
+                                processedCount++;
+                            }
+                            delete tpSessions[sourceAddress];
+                        }
+                    }
+                }
+            }
+            
+            // Detect RTD (Remote Tachograph Download) diagnostic messages
+            // ISO 16844-6 uses Normal Fixed Addressing: CAN ID = 18DA[target][source]
+            // Common addresses: 0xEE = Tachograph VU, 0xFB = FMS device
+            const cleanId = idHex.replace(/^0X/i, '');
+            if (cleanId.length >= 8 && cleanId.substring(cleanId.length - 8, cleanId.length - 4).toUpperCase() === '18DA') {
+                const targetAddr = cleanId.substring(cleanId.length - 4, cleanId.length - 2).toUpperCase();
+                const srcAddr = cleanId.substring(cleanId.length - 2).toUpperCase();
+                const byteMatches = rawHex.match(/.{1,2}/g);
+                if (byteMatches && byteMatches.length >= 2) {
+                    const diagBytes = byteMatches.map(h => parseInt(h, 16));
+                    const sid = diagBytes[1]; // UDS Service ID (after length byte)
+                    // UDS Service IDs per User Guide v0301 Section V (RTD protocol)
+                    const UDS_SERVICES = {
+                        0x10: 'DiagnosticSessionControl', 0x22: 'ReadDataByIdentifier',
+                        0x31: 'RoutineControl', 0x35: 'RequestUpload',
+                        0x36: 'TransferData', 0x37: 'RequestTransferExit',
+                        0x3E: 'TesterPresent',
+                        0x50: 'DiagnosticSessionControl (Response)', 0x62: 'ReadDataByIdentifier (Response)',
+                        0x71: 'RoutineControl (Response)', 0x75: 'RequestUpload (Response)',
+                        0x76: 'TransferData (Response)', 0x77: 'RequestTransferExit (Response)',
+                        0x7E: 'TesterPresent (Response)',
+                        0x7F: 'Negative Response'
+                    };
+                    // RoutineControl option/status values (User Guide v0301 Section IV.2.2)
+                    const ROUTINE_OPTIONS = {
+                        0x01: 'RemoteCompanyCardReady', 0x02: 'VUReady',
+                        0x03: 'CompanyCardToVUData', 0x04: 'VUToCompanyCardData',
+                        0x06: 'RemoteAuthenticationSucceeded', 0x07: 'RemoteDownloadDataRequest',
+                        0x08: 'RemoteDownloadAccessGranted', 0x09: 'CloseRemoteAuthentication',
+                        0x0A: 'RemoteAuthenticationClosed', 0x0C: 'APDUError',
+                        0x0E: 'AuthenticationError', 0x10: 'TooManyAuthenticationErrors'
+                    };
+                    // UDS Negative Response codes (User Guide v0301 Section V.1.4 / V.2.2.4)
+                    const NRC_CODES = {
+                        0x10: 'generalReject', 0x11: 'serviceNotSupported',
+                        0x12: 'subFunctionNotSupported', 0x13: 'incorrectMessageLengthOrInvalidFormat',
+                        0x21: 'busyRepeatRequest', 0x22: 'conditionsNotCorrect',
+                        0x24: 'requestSequenceError', 0x31: 'requestOutOfRange',
+                        0x78: 'responsePending', 0x7F: 'serviceNotSupportedInActiveSession'
+                    };
+                    // TransferData TRTP#2/TREP#2 values (User Guide v0301 Section V.2)
+                    const TRTP_TYPES = {
+                        0x00: 'Download Interface Version', 0x01: 'Overview', 0x02: 'Activities',
+                        0x03: 'Events and Faults', 0x04: 'Detailed Speed',
+                        0x05: 'Technical Data', 0x06: 'Card Download'
+                    };
+                    const TREP_TYPES = {
+                        0x00: 'Download Interface Version (Gen2v2)',
+                        0x01: 'Overview (Gen1)', 0x02: 'Activities (Gen1)', 0x03: 'Events/Faults (Gen1)',
+                        0x04: 'Detailed Speed (Gen1)', 0x05: 'Technical Data (Gen1)',
+                        0x21: 'Overview (Gen2v1)', 0x22: 'Activities (Gen2v1)', 0x23: 'Events/Faults (Gen2v1)',
+                        0x24: 'Detailed Speed (Gen2)', 0x25: 'Technical Data (Gen2v1)',
+                        0x31: 'Overview (Gen2v2)', 0x32: 'Activities (Gen2v2)', 0x33: 'Events/Faults (Gen2v2)',
+                        0x35: 'Technical Data (Gen2v2)'
+                    };
+                    // DiagnosticSession types (User Guide v0301 Section V)
+                    const SESSION_TYPES = {
+                        0x01: 'defaultSession', 0x7E: 'remoteSession'
+                    };
+                    const svcName = UDS_SERVICES[sid] || ('Service 0x' + sid.toString(16).toUpperCase());
+                    // Build detailed message description
+                    let msgDetail = svcName;
+                    // Decode RoutineControl details (SID 0x31 or 0x71)
+                    if ((sid === 0x31 || sid === 0x71) && diagBytes.length >= 6) {
+                        const optByte = diagBytes[5]; // routineControlOption#1 or routineStatus#1
+                        const stepName = ROUTINE_OPTIONS[optByte] || ('Option 0x' + optByte.toString(16).toUpperCase());
+                        msgDetail += ': ' + stepName;
+                    }
+                    // Decode DiagnosticSessionControl session type (SID 0x10 or 0x50)
+                    if ((sid === 0x10 || sid === 0x50) && diagBytes.length >= 3) {
+                        const sessType = diagBytes[2];
+                        const sessName = SESSION_TYPES[sessType] || ('session 0x' + sessType.toString(16).toUpperCase());
+                        msgDetail += ' (' + sessName + ')';
+                    }
+                    // Decode TransferData request TRTP#2 (SID 0x36)
+                    if (sid === 0x36 && diagBytes.length >= 5) {
+                        const trtp = diagBytes[4]; // TRTP#2 after blockSequenceCounter and wrapAroundCounter
+                        const trtpName = TRTP_TYPES[trtp] || ('Type 0x' + trtp.toString(16).toUpperCase());
+                        msgDetail += ': Request ' + trtpName;
+                    }
+                    // Decode TransferData response TREP#2 (SID 0x76)
+                    if (sid === 0x76 && diagBytes.length >= 5) {
+                        const trep = diagBytes[4]; // TREP#2 after blockSequenceCounter and wrapAroundCounter
+                        const trepName = TREP_TYPES[trep] || ('TREP 0x' + trep.toString(16).toUpperCase());
+                        msgDetail += ': ' + trepName;
+                    }
+                    // Decode Negative Response (SID 0x7F)
+                    if (sid === 0x7F && diagBytes.length >= 4) {
+                        const rejSid = diagBytes[2];
+                        const nrc = diagBytes[3];
+                        const rejSvcName = UDS_SERVICES[rejSid] || ('SID 0x' + rejSid.toString(16).toUpperCase());
+                        const nrcName = NRC_CODES[nrc] || ('NRC 0x' + nrc.toString(16).toUpperCase());
+                        msgDetail += ': ' + rejSvcName + ' → ' + nrcName;
+                    }
+                    // Known tachograph Data Identifiers (ISO 16844-7)
+                    const TACHO_DIDS = {
+                        'F190': 'VIN (Vehicle Identification Number)',
+                        'F191': 'VRN (Vehicle Registration Number)',
+                        'F197': 'System Name',
+                        'F1A0': 'Diagnostic Protocol Information',
+                        'F901': 'VU Manufacturing Date',
+                        'F902': 'VU Approval Number',
+                        'F903': 'VU Serial Number',
+                        'F904': 'VU Generation',
+                        'F905': 'VU Ability / SW Identification',
+                        'F906': 'VU Software Version',
+                        'F907': 'Remote Download Status',
+                        'F908': 'VU Part Number',
+                        'F909': 'VU Hardware Version',
+                        'F90A': 'Data Download Availability',
+                        'F912': 'VRN (Registration Number from VU)',
+                        'F913': 'Current VRN (Registration Plate)'
+                    };
+                    rtdDetected = true;
+                    rtdAddresses.add('0x' + srcAddr);
+                    rtdAddresses.add('0x' + targetAddr);
+                    if (rtdMessages.length < 20) {
+                        rtdMessages.push(msgDetail + ' [' + srcAddr + '→' + targetAddr + ']');
+                    }
+
+                    // Extract DID from ReadDataByIdentifier (0x22) and positive response (0x62)
+                    if ((sid === 0x22 || sid === 0x62) && diagBytes.length >= 4) {
+                        const didHex = ((diagBytes[2] << 8) | diagBytes[3]).toString(16).toUpperCase().padStart(4, '0');
+                        const didName = TACHO_DIDS[didHex] || 'Unknown DID';
+                        if (sid === 0x62 && diagBytes.length >= 5) {
+                            // Positive response — extract value
+                            const respBytes = diagBytes.slice(4, 4 + diagBytes[0] - 3);
+                            const respHex = respBytes.map(function(b) { return b.toString(16).toUpperCase().padStart(2, '0'); }).join(' ');
+                            // Try to decode as ASCII for VRN/VIN DIDs
+                            const respAscii = respBytes.map(function(b) { return (b >= 32 && b <= 126) ? String.fromCharCode(b) : ''; }).join('').trim();
+                            const displayVal = respAscii.length >= 3 ? respAscii : (respHex || '(empty)');
+                            rtdDIDData[didHex] = { name: didName, value: displayVal };
+                            // Extract VRN from tachograph DIDs
+                            if ((didHex === 'F191' || didHex === 'F912' || didHex === 'F913') && respAscii && !detectedVRN) {
+                                detectedVRN = respAscii;
+                            }
+                        } else if (sid === 0x22 && !rtdDIDData[didHex]) {
+                            rtdDIDData[didHex] = { name: didName, value: '(requested)' };
+                        }
+                    }
+                }
+            }
+
+            if(PGN_LIB[pgn]) {
+                inventory[pgn] = (inventory[pgn] || 0) + 1;
+                const def = PGN_LIB[pgn];
+                const bytes = rawHex.match(/.{1,2}/g).map(h => parseInt(h, 16));
+
+                // Initialize PGN data storage if needed
+                if (!pgnData[pgn]) {
+                    pgnData[pgn] = { name: def.name, params: {} };
+                }
+
+                def.spns.forEach(spn => {
+                    const value = decodeValue(bytes, spn);
+                    if (value === null) return; // Skip invalid values
+                    
+                    // Store decoded value for all-PGN display
+                    const label = (spn.labels && spn.labels[value] !== undefined) ? spn.labels[value] : null;
+                    pgnData[pgn].params[spn.n] = {
+                        value: value,
+                        unit: spn.unit || '',
+                        desc: spn.desc || spn.n,
+                        label: label,
+                        spn: spn.spn // Store SPN number for display
+                    };
+                    
+                    // Collect RPM data for chart
+                    if(spn.n === "EngineSpeed" || spn.n === "RPM") {
+                        // Track max RPM value and only set detected if > 100 to prevent false positives
+                        if (value > maxRpmValue) {
+                            maxRpmValue = value;
+                        }
+                        if (value > 100) {
+                            rpmDetected = true; // Mark that significant RPM data has been found (>100 RPM)
+                        }
+                        if(idx % CHART_SAMPLE_RATE === 0) { 
+                            chartData.rpm.push(value); 
+                            chartData.labels.push(row[timeCol] || idx); 
+                        }
+                    }
+                    
+                    // Collect Vehicle Speed data for harsh braking detection (not charted)
+                    if(spn.n === "VehicleSpeed" || spn.n === "Speed") {
+                        // Detect harsh braking events (internal tracking)
+                        if(lastSpeed > HARSH_BRAKE_MIN_SPEED && (lastSpeed - value) > HARSH_BRAKE_THRESHOLD) { 
+                            harshCount++;
+                            const div = document.createElement('div');
+                            div.className = 'event-item';
+                            div.innerHTML = `<b>HARSH BRAKE</b> [${row[timeCol] || 'Row ' + idx}]<br>Reduction: -${(lastSpeed-value).toFixed(1)} km/h`;
+                            safetyLog.appendChild(div);
+                        }
+                        lastSpeed = value;
+                    }
+                    
+                    // Collect Accelerator Pedal Position for chart
+                    if(spn.n === "AccelPedalPos" || spn.n === "AcceleratorPedalPosition") {
+                        if(idx % CHART_SAMPLE_RATE === 0) {
+                            chartData.accelPedal.push(value);
+                        }
+                    }
+                    
+                    // Collect Brake Pedal Position for chart
+                    if(spn.n === "BrakePedalPosition") {
+                        if(idx % CHART_SAMPLE_RATE === 0) {
+                            chartData.brakePedal.push(value);
+                        }
+                    }
+                    
+                    // Collect Engine Load for chart
+                    if(spn.n === "EngineLoad" || spn.n === "PercentLoadAtCurrentSpeed") {
+                        if(idx % CHART_SAMPLE_RATE === 0) {
+                            chartData.engineLoad.push(value);
+                        }
+                    }
+                    
+                    // Collect PTO State for chart (convert to binary ON=1, OFF=0)
+                    if(spn.n === "PTOEngaged") {
+                        if(idx % CHART_SAMPLE_RATE === 0) {
+                            // PTOEngaged: 0=not engaged, 1=engaged, 2=error, 3=not available
+                            const ptoValue = (value === 1) ? 1 : 0; // 1 for engaged, 0 for all else
+                            chartData.pto.push(ptoValue);
+                        }
+                    }
+                    
+                    // Track VIN and VRN
+                    if (spn.n === "VehicleID" && value && !detectedVIN) {
+                        detectedVIN = value;
+                    }
+                    if (spn.n === "VehicleRegNumber" && value && !detectedVRN) {
+                        detectedVRN = value;
+                    }
+
+                    // Detect electric/hybrid vehicles
+                    if (spn.n === "HybridBatteryPackRemainingCharge" || spn.n === "PropulsionSystemActive") {
+                        isElectricVehicle = true;
+                    }
+
+                    // Only show fuel level for non-electric vehicles
+                    if(spn.n === "FuelLevel" && !isElectricVehicle) {
+                        document.getElementById('g-fuel').innerText = Math.round(value);
+                    }
+                    
+                    if(spn.n === "TotalDistance" || spn.n === "Odo" || spn.n === "HighResDistance") {
+                        document.getElementById('g-odo').innerText = Math.round(value).toLocaleString();
+                        document.getElementById('g-odo-miles').innerText = Math.round(value * 0.621371).toLocaleString() + ' miles';
+                    }
+
+                    // DEF Tank Level (FE56 - AT1T1I) - only for non-electric vehicles
+                    if(spn.n === "DEFTankLevel" && !isElectricVehicle) {
+                        document.getElementById('g-def').innerText = Math.round(value) + '%';
+                    }
+
+                    // Engine Coolant Temperature (FEEE - ET1)
+                    if(spn.n === "CoolantTemp") {
+                        document.getElementById('g-coolant').innerText = Math.round(value) + '°C';
+                    }
+
+                    // Current Gear (F005 - ETC2)
+                    if(spn.n === "CurrentGear") {
+                        const gearDisplay = value === 0 ? 'N' : (value < 0 ? 'R' + Math.abs(value) : value);
+                        document.getElementById('g-gear').innerText = gearDisplay;
+                    }
+                    if(spn.n === "SelectedGear") {
+                        const selDisplay = value === 0 ? 'N' : (value < 0 ? 'R' + Math.abs(value) : value);
+                        document.getElementById('g-gear-selected').innerText = 'Selected: ' + selDisplay;
+                    }
+
+                    // Battery Voltage (FEF7 - VEP)
+                    if(spn.n === "BatteryVoltage") {
+                        document.getElementById('g-battery').innerText = value.toFixed(1) + ' V';
+                    }
+
+                    // Engine Hours (FEE5 - HOURS)
+                    if(spn.n === "TotalEngineHours") {
+                        document.getElementById('g-hours').innerText = Math.round(value).toLocaleString() + ' h';
+                    }
+
+                    // Engine Oil Temperature (FEEE - ET1, SPN 175)
+                    if(spn.n === "EngineOilTemp") {
+                        document.getElementById('g-oiltemp').innerText = Math.round(value) + '°C';
+                    }
+
+                    // Gross Combination Weight (FE70 - CVW)
+                    if(spn.n === "GrossCombinationWeight") {
+                        document.getElementById('g-gcw').innerText = Math.round(value).toLocaleString() + ' kg';
+                    }
+
+                    // Ambient Air Temperature (FEF5 - AMB)
+                    if(spn.n === "AmbientAirTemp") {
+                        document.getElementById('g-ambient').innerText = Math.round(value) + '°C';
+                    }
+
+                    // Engine Oil Pressure (FEEF - EFL/P1)
+                    if(spn.n === "EngineOilPressure") {
+                        document.getElementById('g-oilpress').innerText = Math.round(value) + ' kPa';
+                    }
+
+                    // Transmission Oil Temperature (FEF8 - TRF1)
+                    if(spn.n === "TransmissionOilTemp") {
+                        document.getElementById('g-transoil').innerText = Math.round(value) + '°C';
+                    }
+
+                    // Service Distance (FEC0 - SERV)
+                    if(spn.n === "ServiceDistance") {
+                        document.getElementById('g-service').innerText = Math.round(value).toLocaleString() + ' km';
+                    }
+
+                    // Fuel Rate (FEF2 - LFE)
+                    if(spn.n === "FuelRate") {
+                        document.getElementById('g-fuelrate').innerText = value.toFixed(1) + ' L/h';
+                    }
+
+                    // Fuel Supply Estimated Remaining Distance (FEFF - WIF/FR)
+                    if(spn.n === "FuelSupplyEstRemainingDist") {
+                        document.getElementById('g-fuelrange').innerText = Math.round(value).toLocaleString() + ' km';
+                    }
+
+                    // EV/Hybrid Battery Pack Remaining Charge (FCB7 - VEP4)
+                    if(spn.n === "HybridBatteryPackRemainingCharge") {
+                        document.getElementById('g-evbattery').innerText = value.toFixed(1) + '%';
+                    }
+
+                    // Track PTO data
+                    if(spn.n === "PTOState" || spn.n === "PTOEngaged") {
+                        ptoDetected = true;
+                        if (sourceAddress) ptoSourceAddresses.add('0x' + sourceAddress);
+                        const spnId = spn.spn ? `SPN ${spn.spn}` : spn.n;
+                        const pgnSpnKey = `PGN ${pgn} / ${spnId}`;
+                        if (!ptoPgnSpns.includes(pgnSpnKey)) ptoPgnSpns.push(pgnSpnKey);
+                        if (spn.n === "PTOEngaged") {
+                            ptoStatus = label || (value === 1 ? 'Engaged' : 'Not Engaged');
+                        } else if (spn.n === "PTOState" && !ptoStatus) {
+                            ptoStatus = label || ('State: ' + value);
+                        }
+                    }
+                });
+                
+                processedCount++;
+            }
+        });
+
+        // VIN World Manufacturer Identifier (WMI) lookup - first 3 chars of VIN
+        const WMI_LOOKUP = {
+            'W1T': 'Mercedes-Benz Truck', 'W1V': 'Mercedes-Benz Truck',
+            'WDB': 'Mercedes-Benz', 'WDD': 'Mercedes-Benz', 'WMX': 'Mercedes-Benz Van',
+            'WDF': 'Mercedes-Benz Commercial', 'W1N': 'Mercedes-Benz SUV/Car',
+            'YV1': 'Volvo Car', 'YV2': 'Volvo Truck', 'YV3': 'Volvo Bus',
+            'XLE': 'Scania Truck', 'YS2': 'Scania Truck', '9BS': 'Scania Truck',
+            'VNE': 'DAF Truck', 'XLR': 'DAF Truck',
+            'VF6': 'Renault Truck', 'VNJ': 'Renault Truck',
+            'WMA': 'MAN Truck', 'WMH': 'MAN Truck', 'WAG': 'MAN Bus',
+            'NMB': 'MAN Truck', 'ZFA': 'Fiat/Iveco', 'ZAR': 'Alfa Romeo',
+            'SUP': 'Iveco Truck', 'WJM': 'Iveco Truck',
+            'SAJ': 'Jaguar', 'SAL': 'Land Rover', 'SAR': 'Land Rover',
+            'SCC': 'Lotus', 'WBA': 'BMW', 'WBS': 'BMW M', 'WBY': 'BMW i',
+            'WVW': 'Volkswagen', 'WV1': 'VW Commercial', 'WV2': 'VW Bus/Van',
+            'WAU': 'Audi', 'WP0': 'Porsche', 'WF0': 'Ford', 'VS6': 'Ford',
+            '1FT': 'Ford Truck', '1GC': 'Chevrolet Truck', '1GT': 'GMC Truck',
+            '2HG': 'Honda', 'JHM': 'Honda', 'JTE': 'Toyota', 'JTD': 'Toyota',
+            'JN1': 'Nissan', 'JN6': 'Nissan Truck', 'KMH': 'Hyundai',
+            'KNA': 'Kia', 'LVS': 'Ford (China)',
+        };
+
+        // Decode make from VIN WMI
+        detectedMake = ''; // Reset global variable
+        if (detectedVIN && detectedVIN.length >= 3) {
+            const wmi = detectedVIN.substring(0, 3).toUpperCase();
+            detectedMake = WMI_LOOKUP[wmi] || '';
+            // Try 2-char prefix if no 3-char match
+            if (!detectedMake) {
+                const wmi2 = wmi.substring(0, 2);
+                for (const key in WMI_LOOKUP) {
+                    if (key.substring(0, 2) === wmi2) {
+                        detectedMake = WMI_LOOKUP[key];
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Update VIN & VRN gauge
+        if (detectedVIN && detectedVRN) {
+            document.getElementById('g-vin-label').innerText = 'VIN & VRN Detected';
+            document.getElementById('g-vin').innerText = 'VIN: ' + detectedVIN;
+            document.getElementById('g-vrn').innerText = 'VRN: ' + detectedVRN;
+        } else if (detectedVIN) {
+            document.getElementById('g-vin-label').innerText = 'VIN Detected';
+            document.getElementById('g-vin').innerText = 'VIN: ' + detectedVIN;
+            document.getElementById('g-vrn').innerText = '';
+        } else if (detectedVRN) {
+            document.getElementById('g-vin-label').innerText = 'VRN Detected';
+            document.getElementById('g-vin').innerText = 'VRN: ' + detectedVRN;
+            document.getElementById('g-vrn').innerText = '';
+        } else {
+            document.getElementById('g-vin-label').innerText = 'VIN & VRN';
+            document.getElementById('g-vin').innerText = 'Not detected';
+            document.getElementById('g-vrn').innerText = '';
+        }
+        document.getElementById('g-make').innerText = detectedMake ? 'Make: ' + detectedMake : '';
+
+        // Update PTO gauge
+        if (ptoDetected) {
+            document.getElementById('g-pto').innerText = 'PTO Available';
+            const saList = Array.from(ptoSourceAddresses).join(', ');
+            document.getElementById('g-pto-sa').innerText = saList ? 'Source: ' + saList : '';
+            document.getElementById('g-pto-pgn').innerText = ptoPgnSpns.join(' | ');
+        } else {
+            document.getElementById('g-pto').innerText = 'No PTO Detected';
+            document.getElementById('g-pto-sa').innerText = '';
+            document.getElementById('g-pto-pgn').innerText = '';
+        }
+
+        // Update RTD gauge
+        if (rtdDetected) {
+            document.getElementById('g-rtd').innerText = 'YES RTD Traffic';
+            document.getElementById('g-rtd').style.color = '#22c55e'; // Green for yes
+        } else {
+            document.getElementById('g-rtd').innerText = 'NO RTD Traffic';
+            document.getElementById('g-rtd').style.color = '#ff4757'; // Red for no
+        }
+
+        // Update inventory table with decoded values
+        Object.keys(inventory).sort().forEach(pgn => {
+            const tr = document.createElement('tr');
+            const def = PGN_LIB[pgn];
+            const data = pgnData[pgn];
+            // Just show SPN names without values - detailed data is in Data Overview
+            const spnNames = def.spns.map(s => s.n).join(', ');
+            tr.innerHTML = `<td><span class="tag">${pgn}</span></td><td>${def.name}</td><td>${spnNames}</td>`;
+            invBody.appendChild(tr);
+        });
+
+        // Populate all PGN data points in Telemetry Summary
+        const allPgnDiv = document.getElementById('all-pgn-data');
+        allPgnDiv.innerHTML = '';
+        Object.keys(pgnData).sort().forEach(pgn => {
+            const data = pgnData[pgn];
+            const group = document.createElement('div');
+            group.className = 'pgn-group';
+
+            const header = document.createElement('div');
+            header.className = 'pgn-group-header';
+            header.innerHTML = `<span><span class="tag">${pgn}</span> ${data.name}</span><span class="expand-icon">▼</span>`;
+            header.onclick = function() { group.classList.toggle('collapsed'); };
+
+            const content = document.createElement('div');
+            content.className = 'pgn-group-content';
+
+            Object.keys(data.params).forEach(paramName => {
+                const param = data.params[paramName];
+                const row = document.createElement('div');
+                row.className = 'pgn-param-row';
+                const displayValue = param.label ? `${param.label} (${formatValue(param.value)})` : formatValue(param.value);
+                // Add SPN number to parameter description if available
+                const paramDesc = param.spn ? `${param.desc} (SPN ${param.spn})` : param.desc;
+                row.innerHTML = `<div class="pgn-param-name">${paramDesc}</div><div class="pgn-param-value">${displayValue}</div><div class="pgn-param-unit">${param.unit}</div>`;
+                content.appendChild(row);
+            });
+
+            group.appendChild(header);
+            group.appendChild(content);
+            allPgnDiv.appendChild(group);
+        });
+        
+        // Baud rate is parsed from CSV file header metadata (see handleFile function)
+        // No timing-based detection needed - we get it directly from the log file
+
+        // Update status
+        document.getElementById('file-status').innerText = 
+            `Processed ${processedCount} messages | ${Object.keys(inventory).length} unique PGNs${detectedBaudRate ? ' | Baud: ' + detectedBaudRate : ''}`;
+        document.getElementById('event-count').innerText = harshCount > 0 ? `${harshCount} EVENTS` : '';
+        
+        // Update RPM detected gauge
+        const rpmGauge = document.getElementById('g-rpm-detected');
+        if (rpmDetected) {
+            rpmGauge.innerText = 'YES';
+            rpmGauge.style.color = '#22c55e'; // Green for yes
+        } else {
+            rpmGauge.innerText = 'NO';
+            rpmGauge.style.color = '#ff4757'; // Red for no
+        }
+        
+        // Update chart with all metrics
+        chart.data.labels = chartData.labels;
+        chart.data.datasets[0].data = chartData.rpm;
+        chart.data.datasets[1].data = chartData.accelPedal;
+        chart.data.datasets[2].data = chartData.brakePedal;
+        chart.data.datasets[3].data = chartData.engineLoad;
+        chart.data.datasets[4].data = chartData.pto;
+        chart.update();
+        
+        // Prepare tachograph PGN data for display
+        const tachoPgnData = {};
+        if (pgnData['FE6C']) {
+            tachoPgnData['FE6C'] = {};
+            const fe6cParams = pgnData['FE6C'].params;
+            // Pass all TCO1 parameters
+            Object.keys(fe6cParams).forEach(function(key) {
+                tachoPgnData['FE6C'][key] = fe6cParams[key];
+            });
+        }
+        if (pgnData['FE6B']) {
+            tachoPgnData['FE6B'] = {};
+            const fe6bParams = pgnData['FE6B'].params;
+            if (fe6bParams.DriverID !== undefined) {
+                tachoPgnData['FE6B'].DriverID = fe6bParams.DriverID.value;
+            }
+        }
+        
+        // Update Tachograph tab with RTD and tacho PGN data
+        updateTachographTab(rtdDetected, rtdMessages, rtdAddresses, rtdDIDData, tachoPgnData);
+    }
+    
+    
+    // Decoder functions for tachograph DID values
+    function decodeTachographDID(did, rawValue) {
+        // Remove spaces from hex value for parsing
+        const hexValue = rawValue.replace(/\s+/g, '');
+        
+        // Parse first byte if it's a hex string
+        let byteValue = null;
+        if (hexValue.match(/^[0-9A-F]+$/i)) {
+            byteValue = parseInt(hexValue.substring(0, 2), 16);
+        }
+        
+        // DID-specific decoders
+        switch(did) {
+            case 'F907': // Remote Download Status
+                if (byteValue !== null) {
+                    const statuses = {
+                        0x00: 'Download not requested',
+                        0x01: 'Download requested',
+                        0x02: 'Download in progress',
+                        0x03: 'Download completed',
+                        0x04: 'Download error',
+                        0xFF: 'Status not available'
+                    };
+                    return statuses[byteValue] || `Unknown status (0x${byteValue.toString(16).toUpperCase()})`;
+                }
+                break;
+                
+            case 'F904': // VU Generation
+                if (byteValue !== null) {
+                    const generations = {
+                        0x00: 'Generation 1',
+                        0x01: 'Generation 2 (Smart Tachograph)',
+                        0x02: 'Generation 2.1',
+                        0x03: 'Generation 2.2'
+                    };
+                    return generations[byteValue] || `Generation ${byteValue} (Future)`;
+                }
+                break;
+                
+            case 'F90A': // Data Download Availability
+                if (byteValue !== null) {
+                    const availability = {
+                        0x00: 'No data available',
+                        0x01: 'Data available for download',
+                        0x02: 'Data partially available',
+                        0xFF: 'Availability unknown'
+                    };
+                    return availability[byteValue] || `Unknown (0x${byteValue.toString(16).toUpperCase()})`;
+                }
+                break;
+        }
+        
+        return null; // No decoding available for this DID
+    }
+    
+    // Decoder functions for tachograph SPNs (PGN FE6C - TCO1)
+    function decodeTachoWorkState(value) {
+        // 3-bit value (0-7) for driver work state
+        const states = {
+            0b000: 'Rest',
+            0b001: 'Available',
+            0b010: 'Work',
+            0b011: 'Drive',
+            0b100: 'Reserved',
+            0b101: 'Reserved',
+            0b110: 'Error',
+            0b111: 'Not available'
+        };
+        return states[value & 0x07] || 'Unknown';
+    }
+    
+    function decodeDriveRecognition(value) {
+        // 2-bit value for motion detection
+        const states = {
+            0b00: 'No motion detected',
+            0b01: 'Motion detected',
+            0b10: 'Error',
+            0b11: 'Not available'
+        };
+        return states[value & 0x03] || 'Unknown';
+    }
+    
+    function decodeCardPresence(value) {
+        // 2-bit value for driver card presence
+        const states = {
+            0b00: 'Card not present',
+            0b01: 'Card present',
+            0b10: 'Error',
+            0b11: 'Not available'
+        };
+        return states[value & 0x03] || 'Unknown';
+    }
+    
+    function decodeOverspeed(value) {
+        // 2-bit value for vehicle overspeed
+        const states = {
+            0b00: 'No overspeed',
+            0b01: 'Overspeed',
+            0b10: 'Error',
+            0b11: 'Not available'
+        };
+        return states[value & 0x03] || 'Unknown';
+    }
+    
+    function decodeTimeRelatedState(value) {
+        // 4-bit value for time-related warnings
+        const states = {
+            0b0000: 'Normal',
+            0b0001: '15 min before 4h30',
+            0b0010: '4h30 reached',
+            0b0011: '15 min before 9h',
+            0b0100: '9h reached',
+            0b0101: '15 min before 16h duty',
+            0b0110: '16h duty reached',
+            0b0111: 'Reserved',
+            0b1000: 'Reserved',
+            0b1001: 'Reserved',
+            0b1010: 'Reserved',
+            0b1011: 'Reserved',
+            0b1100: 'Reserved',
+            0b1101: 'Reserved',
+            0b1110: 'Error',
+            0b1111: 'Not available'
+        };
+        return states[value & 0x0F] || 'Unknown';
+    }
+    
+    function decodeDirection(value) {
+        // 2-bit value for direction indicator
+        const states = {
+            0b00: 'Forward',
+            0b01: 'Reverse',
+            0b10: 'Error',
+            0b11: 'Not available'
+        };
+        return states[value & 0x03] || 'Unknown';
+    }
+    
+    function decodeTachoBinaryState(value) {
+        // Generic 2-bit decoder for other tacho states
+        const states = {
+            0b00: 'Normal / No',
+            0b01: 'Active / Yes',
+            0b10: 'Error',
+            0b11: 'Not available'
+        };
+        return states[value & 0x03] || 'Unknown';
+    }
+    
+    // Function to populate Tachograph tab with RTD and tacho data
+    function updateTachographTab(rtdDetected, rtdMessages, rtdAddresses, rtdDIDData, tachoPgnData) {
+        const tachographContent = document.getElementById('tachograph-content');
+        
+        // Check if we have any tachograph or RTD data to display
+        const hasTachoData = tachoPgnData && Object.keys(tachoPgnData).length > 0;
+        
+        if (!rtdDetected && !hasTachoData) {
+            tachographContent.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 10px;">
+                        ⚠️ No Tachograph or RTD Data Detected
+                    </p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        This log file does not contain Tachograph (PGN FE6C/FE6B) or Remote Tachograph Download (RTD) diagnostic messages.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Helper: get a TCO1 param's label or value
+        function getTcoLabel(paramObj) {
+            if (!paramObj) return '—';
+            if (paramObj.label) return paramObj.label;
+            return String(paramObj.value);
+        }
+        function getTcoValue(paramObj) {
+            if (!paramObj) return null;
+            return paramObj.value;
+        }
+        // Helper: color for status values
+        function statusColor(paramObj) {
+            if (!paramObj) return 'var(--text-secondary)';
+            const v = paramObj.value;
+            const label = (paramObj.label || '').toLowerCase();
+            if (label.includes('error') || label.includes('overspeed') || label.includes('event occurred') || label.includes('info present')) return '#ef4444';
+            if (label.includes('not available') || label === '—') return 'var(--text-secondary)';
+            if (label === 'detected' || label === 'present' || label === 'drive' || label === 'work' || label === 'available') return '#22c55e';
+            if (label === 'rest' || label === 'not detected' || label === 'not present' || label === 'no overspeed' || label === 'no event' || label === 'no info' || label === 'normal' || label === 'normal performance' || label === 'forward') return '#3b82f6';
+            if (label === 'reverse') return '#f59e0b';
+            if (label.includes('min before') || label.includes('reached')) return '#f97316';
+            return 'var(--text)';
+        }
+        // Helper: icon for status
+        function statusIcon(paramObj) {
+            if (!paramObj) return '○';
+            const label = (paramObj.label || '').toLowerCase();
+            if (label.includes('error')) return '⚠️';
+            if (label.includes('not available')) return '○';
+            if (label === 'detected' || label === 'present' || label === 'drive' || label === 'work') return '●';
+            if (label === 'overspeed' || label === 'event occurred' || label === 'info present') return '🔴';
+            if (label.includes('reached')) return '🟠';
+            if (label.includes('min before')) return '🟡';
+            if (label === 'rest' || label === 'not detected' || label === 'not present') return '○';
+            if (label === 'available') return '🟢';
+            if (label === 'forward') return '→';
+            if (label === 'reverse') return '←';
+            return '●';
+        }
+
+        // Build tachograph data display
+        let html = '';
+        
+        // Display Tachograph PGN Data (FE6C - TCO1)
+        if (hasTachoData && tachoPgnData['FE6C']) {
+            const td = tachoPgnData['FE6C'];
+            
+            html += `<div class="section-divider">Tachograph (TCO1) — PGN 0x00FE6C</div>`;
+            
+            // --- Vehicle Status Section ---
+            html += `
+                <div style="padding: 15px; background: rgba(0, 200, 220, 0.05); border-radius: 8px; margin-bottom: 12px;">
+                    <div style="color: var(--accent); font-weight: 600; font-size: 1rem; margin-bottom: 10px;">🚛 Vehicle Status</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            `;
+            // Tacho Vehicle Speed
+            if (td.TachoVehicleSpeed) {
+                const speed = td.TachoVehicleSpeed.value;
+                html += `
+                    <div style="grid-column: 1 / -1; padding: 12px; background: rgba(0, 0, 0, 0.15); border-radius: 6px; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 4px;">Tachograph Speed (SPN 1624)</div>
+                        <div style="color: #22c55e; font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">${speed.toFixed(1)} <span style="font-size: 0.9rem; font-weight: 400;">km/h</span></div>
+                    </div>
+                `;
+            }
+            // Vehicle Motion
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Vehicle Motion (SPN 1611)</div>
+                    <div style="color: ${statusColor(td.VehicleMotion)}; font-weight: 600;">${statusIcon(td.VehicleMotion)} ${getTcoLabel(td.VehicleMotion)}</div>
+                </div>
+            `;
+            // Direction Indicator
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Direction (SPN 1619)</div>
+                    <div style="color: ${statusColor(td.DirectionIndicator)}; font-weight: 600;">${statusIcon(td.DirectionIndicator)} ${getTcoLabel(td.DirectionIndicator)}</div>
+                </div>
+            `;
+            // Vehicle Overspeed
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Overspeed (SPN 1614)</div>
+                    <div style="color: ${statusColor(td.VehicleOverspeed)}; font-weight: 600;">${statusIcon(td.VehicleOverspeed)} ${getTcoLabel(td.VehicleOverspeed)}</div>
+                </div>
+            `;
+            // Tacho Performance
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Tacho Performance (SPN 1620)</div>
+                    <div style="color: ${statusColor(td.TachoPerformance)}; font-weight: 600;">${statusIcon(td.TachoPerformance)} ${getTcoLabel(td.TachoPerformance)}</div>
+                </div>
+            `;
+            html += `</div></div>`;
+            
+            // --- Driver 1 Section ---
+            html += `
+                <div style="padding: 15px; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #3b82f6;">
+                    <div style="color: #3b82f6; font-weight: 600; font-size: 1rem; margin-bottom: 10px;">👤 Driver 1</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Working State (SPN 1612)</div>
+                    <div style="color: ${statusColor(td.Driver1WorkingState)}; font-weight: 600;">${statusIcon(td.Driver1WorkingState)} ${getTcoLabel(td.Driver1WorkingState)}</div>
+                </div>
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Card Status (SPN 1615)</div>
+                    <div style="color: ${statusColor(td.Driver1Card)}; font-weight: 600;">${statusIcon(td.Driver1Card)} ${getTcoLabel(td.Driver1Card)}</div>
+                </div>
+            `;
+            html += `
+                <div style="grid-column: 1 / -1; padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Time-Related Status (SPN 1617)</div>
+                    <div style="color: ${statusColor(td.Driver1TimeRelatedState)}; font-weight: 600;">${statusIcon(td.Driver1TimeRelatedState)} ${getTcoLabel(td.Driver1TimeRelatedState)}</div>
+                </div>
+            `;
+            html += `</div></div>`;
+
+            // --- Driver 2 Section ---
+            html += `
+                <div style="padding: 15px; background: rgba(168, 85, 247, 0.05); border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #a855f7;">
+                    <div style="color: #a855f7; font-weight: 600; font-size: 1rem; margin-bottom: 10px;">👤 Driver 2</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Working State (SPN 1613)</div>
+                    <div style="color: ${statusColor(td.Driver2WorkingState)}; font-weight: 600;">${statusIcon(td.Driver2WorkingState)} ${getTcoLabel(td.Driver2WorkingState)}</div>
+                </div>
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Card Status (SPN 1616)</div>
+                    <div style="color: ${statusColor(td.Driver2Card)}; font-weight: 600;">${statusIcon(td.Driver2Card)} ${getTcoLabel(td.Driver2Card)}</div>
+                </div>
+            `;
+            html += `
+                <div style="grid-column: 1 / -1; padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Time-Related Status (SPN 1618)</div>
+                    <div style="color: ${statusColor(td.Driver2TimeRelatedState)}; font-weight: 600;">${statusIcon(td.Driver2TimeRelatedState)} ${getTcoLabel(td.Driver2TimeRelatedState)}</div>
+                </div>
+            `;
+            html += `</div></div>`;
+
+            // --- System Events Section ---
+            html += `
+                <div style="padding: 15px; background: rgba(239, 68, 68, 0.05); border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #ef4444;">
+                    <div style="color: #ef4444; font-weight: 600; font-size: 1rem; margin-bottom: 10px;">⚙️ System Status</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">Handling Information (SPN 1621)</div>
+                    <div style="color: ${statusColor(td.HandlingInformation)}; font-weight: 600;">${statusIcon(td.HandlingInformation)} ${getTcoLabel(td.HandlingInformation)}</div>
+                </div>
+            `;
+            html += `
+                <div style="padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 6px;">
+                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 3px;">System Event (SPN 1622)</div>
+                    <div style="color: ${statusColor(td.SystemEvent)}; font-weight: 600;">${statusIcon(td.SystemEvent)} ${getTcoLabel(td.SystemEvent)}</div>
+                </div>
+            `;
+            html += `</div></div>`;
+        }
+        
+        // Display PGN FE6B (Driver Identification)
+        if (hasTachoData && tachoPgnData['FE6B']) {
+            const driverData = tachoPgnData['FE6B'];
+            html += `
+                <div style="padding: 15px; background: rgba(0, 200, 220, 0.05); border-radius: 8px; margin-bottom: 15px;">
+                    <div style="color: var(--accent); font-weight: 600; font-size: 1rem; margin-bottom: 10px;">
+                        🪪 Driver Identification — PGN 0x00FE6B
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-size: 0.95rem;">
+            `;
+            
+            if (driverData.DriverID !== undefined) {
+                const driverIdDisplay = driverData.DriverID || '(Not set)';
+                html += `
+                    <div style="color: var(--text-secondary);">Driver 1 ID:</div>
+                    <div style="color: var(--text); font-family: 'JetBrains Mono', monospace;">${driverIdDisplay}</div>
+                `;
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Build RTD data display (if detected)
+        if (rtdDetected) {
+        
+        // RTD Communication Overview
+        const addressList = Array.from(rtdAddresses).join(', ');
+        html += `
+            <div class="section-divider">RTD Communication Overview</div>
+            <div style="padding: 15px; background: rgba(0, 200, 220, 0.05); border-radius: 8px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-size: 0.95rem;">
+                    <div style="color: var(--text-secondary);">Status:</div>
+                    <div style="color: #22c55e; font-weight: 600;">✓ RTD Traffic Detected</div>
+                    
+                    <div style="color: var(--text-secondary);">Addresses:</div>
+                    <div style="color: var(--accent); font-family: 'JetBrains Mono', monospace;">${addressList}</div>
+                    
+                    <div style="color: var(--text-secondary);">Messages Logged:</div>
+                    <div style="color: var(--text);">${rtdMessages.length} RTD service messages</div>
+                </div>
+            </div>
+        `;
+        
+        // Tachograph Data Identifiers (DIDs)
+        const didKeys = Object.keys(rtdDIDData);
+        if (didKeys.length > 0) {
+            html += `<div class="section-divider">Tachograph Data Identifiers (DIDs)</div>`;
+            html += `<div style="margin-bottom: 20px;">`;
+            
+            didKeys.sort().forEach(function(did) {
+                const didInfo = rtdDIDData[did];
+                const isResponse = didInfo.value !== '(requested)';
+                const valueColor = isResponse ? 'var(--text)' : 'var(--text-secondary)';
+                const valueBg = isResponse ? 'rgba(0, 200, 220, 0.08)' : 'rgba(123, 154, 184, 0.05)';
+                
+                // Try to decode the DID value
+                let displayValue = didInfo.value;
+                const decodedDescription = decodeTachographDID(did, didInfo.value);
+                
+                // If we have a decoded description, format it nicely
+                if (decodedDescription && isResponse) {
+                    displayValue = `
+                        <div style="margin-bottom: 6px;">${didInfo.value}</div>
+                        <div style="color: #22c55e; font-size: 0.85rem; font-family: var(--font-primary); border-top: 1px solid rgba(34, 197, 94, 0.2); padding-top: 6px;">
+                            ➜ ${decodedDescription}
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div style="padding: 12px; background: ${valueBg}; border-left: 3px solid ${isResponse ? 'var(--accent)' : 'var(--text-secondary)'}; border-radius: 4px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="color: var(--accent); font-weight: 600; font-family: 'JetBrains Mono', monospace;">DID 0x${did}</span>
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">${didInfo.name}</span>
+                        </div>
+                        <div style="color: ${valueColor}; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 4px;">
+                            ${displayValue}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+        }
+        
+        // RTD Message Log
+        if (rtdMessages.length > 0) {
+            html += `<div class="section-divider">RTD Message Log</div>`;
+            html += `<div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">`;
+            
+            rtdMessages.forEach(function(msg, idx) {
+                html += `
+                    <div style="padding: 8px 12px; background: rgba(0, 0, 0, 0.2); border-left: 2px solid var(--accent); margin-bottom: 5px; border-radius: 4px;">
+                        <span style="color: var(--text-secondary);">#${idx + 1}</span>
+                        <span style="color: var(--text); margin-left: 10px;">${msg}</span>
+                    </div>
+                `;
+            });
+            
+            if (rtdMessages.length === 20) {
+                html += `
+                    <div style="padding: 10px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; font-style: italic;">
+                        (First 20 messages shown)
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+        }
+        
+        } // End of rtdDetected if block
+        
+        tachographContent.innerHTML = html;
+    }
+    
+    // Tab switching function
+    function switchTab(index) {
+        document.querySelectorAll('.tab').forEach((tab, i) => {
+            tab.classList.toggle('active', i === index);
+        });
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        const target = document.getElementById('tab-' + index);
+        if (target) target.classList.add('active');
+    }
+    
+    // Excel Export Functions
+    function exportDataOverview() {
+        // Check if XLSX library is loaded
+        if (typeof XLSX === 'undefined') {
+            alert('Excel export library (SheetJS) is currently blocked by browser security.\n\nTo use Excel export:\n1. Disable ad blockers for this page\n2. Allow external scripts from cdn.jsdelivr.net\n3. Refresh the page\n\nAlternatively, use the browser\'s "Print to PDF" feature to save the data.');
+            console.error('XLSX library not loaded');
+            return;
+        }
+        
+        if (!pgnData || Object.keys(pgnData).length === 0) {
+            alert('No data to export. Please load a CSV file first.');
+            return;
+        }
+        
+        try {
+            console.log('Starting Data Overview export...');
+            const wb = XLSX.utils.book_new();
+            
+            // Metadata sheet
+            const metaData = [
+                ['CAN Insight - Data Overview Export'],
+                [''],
+                ['Export Date:', new Date().toLocaleString()],
+                ['VIN:', detectedVIN || 'Not detected'],
+                ['Vehicle Make:', detectedMake || 'Not detected'],
+                ['CAN Baud Rate:', detectedBaudRate || 'Not detected'],
+                ['']
+            ];
+            const metaSheet = XLSX.utils.aoa_to_sheet(metaData);
+            XLSX.utils.book_append_sheet(wb, metaSheet, 'Metadata');
+            
+            // Data Overview sheet
+            const dataRows = [['PGN', 'PGN Description', 'Parameter', 'SPN', 'Value', 'Unit']];
+            
+            Object.keys(pgnData).sort().forEach(pgn => {
+                const data = pgnData[pgn];
+                Object.keys(data.params).forEach(paramName => {
+                    const param = data.params[paramName];
+                    const displayValue = param.label ? `${param.label} (${formatValue(param.value)})` : formatValue(param.value);
+                    const spnText = param.spn ? `SPN ${param.spn}` : '';
+                    dataRows.push([pgn, data.name, param.desc, spnText, displayValue, param.unit]);
+                });
+            });
+            
+            const dataSheet = XLSX.utils.aoa_to_sheet(dataRows);
+            XLSX.utils.book_append_sheet(wb, dataSheet, 'Data Overview');
+            
+            // Generate filename with date
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `CAN_Data_Overview_${dateStr}.xlsx`;
+            
+            console.log('Attempting to download file:', filename);
+            // Use writeFile for browser download
+            XLSX.writeFile(wb, filename);
+            console.log('Export completed successfully');
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Error creating Excel file: ' + error.message);
+        }
+    }
+    
+    function exportVehicleSupportedPGNs() {
+        // Check if XLSX library is loaded
+        if (typeof XLSX === 'undefined') {
+            alert('Excel export library (SheetJS) is currently blocked by browser security.\n\nTo use Excel export:\n1. Disable ad blockers for this page\n2. Allow external scripts from cdn.jsdelivr.net\n3. Refresh the page\n\nAlternatively, use the browser\'s "Print to PDF" feature to save the data.');
+            console.error('XLSX library not loaded');
+            return;
+        }
+        
+        if (!inventory || Object.keys(inventory).length === 0) {
+            alert('No data to export. Please load a CSV file first.');
+            return;
+        }
+        
+        try {
+            console.log('Starting Vehicle Supported PGNs export...');
+            const wb = XLSX.utils.book_new();
+            
+            // Metadata sheet
+            const metaData = [
+                ['CAN Insight - Vehicle Supported PGNs Export'],
+                [''],
+                ['Export Date:', new Date().toLocaleString()],
+                ['VIN:', detectedVIN || 'Not detected'],
+                ['Vehicle Make:', detectedMake || 'Not detected'],
+                ['CAN Baud Rate:', detectedBaudRate || 'Not detected'],
+                ['']
+            ];
+            const metaSheet = XLSX.utils.aoa_to_sheet(metaData);
+            XLSX.utils.book_append_sheet(wb, metaSheet, 'Metadata');
+            
+            // Vehicle Supported PGNs sheet
+            const pgnRows = [['PGN', 'Description', 'SPNs']];
+            
+            Object.keys(inventory).sort().forEach(pgn => {
+                const def = PGN_LIB[pgn];
+                if (def && def.spns && Array.isArray(def.spns)) {
+                    const spnNames = def.spns.map(s => s.n).join(', ');
+                    pgnRows.push([pgn, def.name, spnNames]);
+                }
+            });
+            
+            const pgnSheet = XLSX.utils.aoa_to_sheet(pgnRows);
+            XLSX.utils.book_append_sheet(wb, pgnSheet, 'Supported PGNs');
+            
+            // Generate filename with date
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `CAN_Vehicle_Supported_PGNs_${dateStr}.xlsx`;
+            
+            console.log('Attempting to download file:', filename);
+            // Use writeFile for browser download
+            XLSX.writeFile(wb, filename);
+            console.log('Export completed successfully');
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Error creating Excel file: ' + error.message);
+        }
+    }
+</script>
+</body>
+</html>
